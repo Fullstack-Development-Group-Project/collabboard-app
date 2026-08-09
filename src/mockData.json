@@ -1,0 +1,60 @@
+{
+  "board": {
+    "title": "CollabBoard",
+    "columns": [
+      {
+        "id": "col-1",
+        "title": "To Do",
+        "tasks": [
+          {
+            "id": "task-1",
+            "title": "Design wireframes",
+            "description": "Create basic wireframes for the board, columns, and task cards.",
+            "assignee": "Alice",
+            "priority": "High"
+          },
+          {
+            "id": "task-2",
+            "title": "Set up Express server",
+            "description": "Initialize a Node.js project with Express for the REST API.",
+            "assignee": "Bob",
+            "priority": "Medium"
+          }
+        ]
+      },
+      {
+        "id": "col-2",
+        "title": "Doing",
+        "tasks": [
+          {
+            "id": "task-3",
+            "title": "Build static Board UI",
+            "description": "Implement the React components for Board, Column, and TaskCard.",
+            "assignee": "Danidukiyu",
+            "priority": "High"
+          }
+        ]
+      },
+      {
+        "id": "col-3",
+        "title": "Done",
+        "tasks": [
+          {
+            "id": "task-4",
+            "title": "Scaffold React App",
+            "description": "Use Vite to generate the initial React skeleton.",
+            "assignee": "Danidukiyu",
+            "priority": "High"
+          },
+          {
+            "id": "task-5",
+            "title": "Add PR Template",
+            "description": "Create standard PR template for grading rubric.",
+            "assignee": "Danidukiyu",
+            "priority": "Medium"
+          }
+        ]
+      }
+    ]
+  }
+}
