@@ -1,16 +1,46 @@
-# React + Vite
+# CollabBoard
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A collaborative Kanban-style task board where a small team can create boards, add tasks, move tasks between columns, and see teammates' changes update live.
 
-Currently, two official plugins are available:
+## Tech Stack
+- **Frontend:** React, Vite, CSS
+- **Backend:** Node.js, Express (WIP)
+- **Database:** MongoDB via Mongoose (WIP)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Architecture & Design
 
-## React Compiler
+### React Component Tree
+Our static UI follows this clean, reusable hierarchical structure:
+```text
+App
+ ├── Navbar
+ └── Board
+      └── Column (Reusable for To Do, Doing, Done)
+           └── TaskCard (Reusable for individual tasks)
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Wireframes
+Here are the primary layout wireframes for the application:
 
-## Expanding the Oxlint configuration
+#### Dashboard
+![Dashboard](design/Wireframes/Dashbord.png)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+#### Kanban Board (My Board)
+![My Board](design/Wireframes/My%20board.png)
+
+## Local Setup Instructions
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Fullstack-Development-Group-Project/collabboard-app.git
+   cd collabboard-app
+   ```
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+3. **Run the local development server:**
+   ```bash
+   npm run dev
+   ```
+4. Open `http://localhost:5173` in your browser.
