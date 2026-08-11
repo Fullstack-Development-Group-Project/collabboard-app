@@ -13,7 +13,7 @@
         <mxCell id="bscKGCCAwREoJGQrsFWv-7" parent="1" style="whiteSpace=wrap;html=1;" value="Doing&lt;div&gt;Doing.jsx&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="1640" y="600" as="geometry" />
         </mxCell>
-        <mxCell id="bscKGCCAwREoJGQrsFWv-9" parent="1" style="whiteSpace=wrap;html=1;" value="Taskcard" vertex="1">
+        <mxCell id="bscKGCCAwREoJGQrsFWv-9" parent="1" style="whiteSpace=wrap;html=1;" value="TaskCard" vertex="1">
           <mxGeometry height="60" width="120" x="1680" y="440" as="geometry" />
         </mxCell>
         <mxCell id="bscKGCCAwREoJGQrsFWv-10" parent="1" style="whiteSpace=wrap;html=1;" value="My Boards&lt;div&gt;Board.jsx&lt;/div&gt;" vertex="1">
