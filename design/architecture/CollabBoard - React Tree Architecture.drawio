@@ -7,7 +7,7 @@
         <mxCell id="bscKGCCAwREoJGQrsFWv-3" parent="1" style="whiteSpace=wrap;html=1;" value="Navigation bar&lt;div&gt;Navbar.jsx&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="830" y="600" as="geometry" />
         </mxCell>
-        <mxCell id="bscKGCCAwREoJGQrsFWv-5" parent="1" style="whiteSpace=wrap;html=1;" value="To do&lt;div&gt;To do.jsx&lt;/div&gt;" vertex="1">
+        <mxCell id="bscKGCCAwREoJGQrsFWv-5" parent="1" style="whiteSpace=wrap;html=1;" value="Column (To Do)&lt;div&gt;Column.jsx&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="1440" y="360" as="geometry" />
         </mxCell>
         <mxCell id="bscKGCCAwREoJGQrsFWv-7" parent="1" style="whiteSpace=wrap;html=1;" value="Doing&lt;div&gt;Doing.jsx&lt;/div&gt;" vertex="1">
