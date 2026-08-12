@@ -1,4 +1,5 @@
 // In-Memory Database for Milestone 2
+const bcrypt = require('bcryptjs');
 
 const db = {
   users: [
@@ -6,7 +7,7 @@ const db = {
       id: "user123",
       name: "Danindu",
       email: "danindu@example.com",
-      password: "securepassword123", // normally hashed
+      password: bcrypt.hashSync("securepassword123", 10),
       jobTitle: "Software Developer",
       bio: "Building seamless collaborative experiences"
     }

@@ -21,6 +21,7 @@ const activityRoutes = require('./routes/activityRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 
 // Mount Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/boards', boardRoutes);
 app.use('/api/v1/tasks', taskRoutes);

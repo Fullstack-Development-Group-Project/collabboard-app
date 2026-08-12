@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const tasksController = require('../controllers/tasksController');
-const { bypassAuth } = require('../middleware/authMiddleware');
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.use(bypassAuth);
+router.use(authMiddleware);
 
 // Global tasks (e.g. assigned to me)
 router.get('/assigned', tasksController.getAssignedTasks);
