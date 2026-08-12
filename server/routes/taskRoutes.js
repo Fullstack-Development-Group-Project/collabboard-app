@@ -8,9 +8,7 @@ router.use(bypassAuth);
 // Global tasks (e.g. assigned to me)
 router.get('/assigned', tasksController.getAssignedTasks);
 
-// Board-specific tasks are usually mounted at /api/v1/boards/:boardId/tasks 
-// but can be handled here if we configure router with mergeParams
-router.post('/boards/:boardId', tasksController.createTask);
+// Direct task operations
 router.put('/:id', tasksController.updateTask);
 router.delete('/:id', tasksController.deleteTask);
 
