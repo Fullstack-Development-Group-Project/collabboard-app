@@ -21,6 +21,10 @@ App
 
 [View full React Component Tree Diagram (Draw.io)](design/architecture/CollabBoard%20-%20React%20Tree%20Architecture.drawio)
 
+### API Contract
+The complete backend REST API blueprint (including Auth, Boards, Tasks, Teams, and Profiles) has been fully documented for the front-end team to reference.
+[View API Contract Blueprint](design/API_CONTRACT.md)
+
 ### Wireframes
 Here are the primary layout wireframes for the application:
 
