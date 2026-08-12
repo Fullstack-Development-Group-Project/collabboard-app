@@ -1,8 +1,46 @@
-import { Link } from "react-router";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
 import logo from "../assets/collabboard-logo.jpeg";
 import heroImage from "../assets/hero.png";
 
+const API_BASE = "http://localhost:5000/api/v1";
+
 function Login() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="login-page">
       <section className="login-visual">
@@ -46,7 +84,9 @@ function Login() {
             Sign in to your CollabBoard workspace.
           </p>
 
-          <form className="login-form">
+          <form className="login-form" onSubmit={handleSubmit}>
+            {error && <p className="error-message">{error}</p>}
+
             <div className="auth-form-group">
               <label htmlFor="login-email">WORK EMAIL</label>
 
@@ -56,6 +96,9 @@ function Login() {
                   id="login-email"
                   type="email"
                   placeholder="name@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
             </div>
@@ -72,6 +115,9 @@ function Login() {
                   id="login-password"
                   type="password"
                   placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
                 <span className="password-eye">◉</span>
               </div>
@@ -82,8 +128,8 @@ function Login() {
               <span>Keep me signed in</span>
             </label>
 
-            <button type="submit" className="signin-btn">
-              Sign In <span>→</span>
+            <button type="submit" className="signin-btn" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"} <span>→</span>
             </button>
 
             <div className="auth-divider">
