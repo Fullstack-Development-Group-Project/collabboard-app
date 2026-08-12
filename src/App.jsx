@@ -1,113 +1,48 @@
-import Board from "./components/Board";
-import mockData from "./mockData.json";
-import logo from "./assets/collabboard-logo.jpeg";
+import { Routes, Route } from "react-router";
+
+import Sidebar from "./components/Sidebar";
+
+import Dashboard from "./pages/Dashboard";
+import BoardPage from "./pages/BoardPage";
+import Recent from "./pages/Recent";
+import AssignedToMe from "./pages/AssignedToMe";
+import Team from "./pages/Team";
+import Activity from "./pages/Activity";
+import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+
 import "./App.css";
 
 function App() {
   return (
-    <div className="app-layout">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        {/* Brand */}
-        <div className="brand">
-          <img
-            src={logo}
-            alt="CollabBoard Logo"
-            className="brand-logo-image"
-          />
+    <Routes>
+      {/* Authentication Pages */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-          <div className="brand-text">
-            <h2>CollabBoard</h2>
-            <p>Enterprise Workspace</p>
-          </div>
-        </div>
+      {/* Main Workspace */}
+      <Route
+        path="*"
+        element={
+          <div className="app-layout">
+            <Sidebar />
 
-        {/* Navigation */}
-        <nav className="sidebar-nav">
-          <button className="nav-item">
-            <span className="nav-icon">▦</span>
-            <span>Dashboard</span>
-          </button>
-
-          <button className="nav-item active">
-            <span className="nav-icon">◉</span>
-            <span>My Boards</span>
-          </button>
-
-          <button className="nav-item">
-            <span className="nav-icon">↶</span>
-            <span>Recent</span>
-          </button>
-
-          <button className="nav-item">
-            <span className="nav-icon">✓</span>
-            <span>Assigned to Me</span>
-          </button>
-
-          <button className="nav-item">
-            <span className="nav-icon">♟</span>
-            <span>Team</span>
-          </button>
-
-          <button className="nav-item">
-            <span className="nav-icon">▣</span>
-            <span>Activity</span>
-          </button>
-
-          <button className="nav-item settings-item">
-            <span className="nav-icon">⚙</span>
-            <span>Settings</span>
-          </button>
-        </nav>
-
-        {/* Profile */}
-        <div className="profile-link">
-          <div className="profile-avatar">N</div>
-
-          <div className="profile-info">
-            <strong>Profile</strong>
-            <span>Nethupa</span>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="main-content">
-        {/* Top Header */}
-        <header className="topbar">
-          <div className="workspace-title">
-            <h2>Website Redesign</h2>
-            <span className="star">☆</span>
-          </div>
-
-          <div className="topbar-actions">
-            <div className="member-avatars">
-              <span>N</span>
-              <span>I</span>
-              <span>U</span>
+            <div className="main-content">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/boards" element={<BoardPage />} />
+                <Route path="/recent" element={<Recent />} />
+                <Route path="/assigned" element={<AssignedToMe />} />
+                <Route path="/team" element={<Team />} />
+                <Route path="/activity" element={<Activity />} />
+                <Route path="/settings" element={<Settings />} />
+              </Routes>
             </div>
-
-            <button className="invite-btn">
-              <span>＋</span>
-              Invite
-            </button>
-
-            <button
-              className="notification-btn"
-              aria-label="Notifications"
-            >
-              ♢
-              <span className="notification-dot"></span>
-            </button>
           </div>
-        </header>
-
-        {/* Board Content */}
-        <main className="content-area">
-          <Board board={mockData.board} />
-        </main>
-      </div>
-    </div>
+        }
+      />
+    </Routes>
   );
 }
 
