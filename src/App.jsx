@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router";
+import { Routes, Route, Navigate } from "react-router";
 
 import Sidebar from "./components/Sidebar";
 
@@ -14,6 +14,17 @@ import Register from "./pages/Register";
 
 import "./App.css";
 
+function isAuthenticated() {
+  return Boolean(localStorage.getItem("token"));
+}
+
+function ProtectedLayout({ children }) {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
 function App() {
   return (
     <Routes>
@@ -25,21 +36,23 @@ function App() {
       <Route
         path="*"
         element={
-          <div className="app-layout">
-            <Sidebar />
+          <ProtectedLayout>
+            <div className="app-layout">
+              <Sidebar />
 
-            <div className="main-content">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/boards" element={<BoardPage />} />
-                <Route path="/recent" element={<Recent />} />
-                <Route path="/assigned" element={<AssignedToMe />} />
-                <Route path="/team" element={<Team />} />
-                <Route path="/activity" element={<Activity />} />
-                <Route path="/settings" element={<Settings />} />
-              </Routes>
+              <div className="main-content">
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/boards" element={<BoardPage />} />
+                  <Route path="/recent" element={<Recent />} />
+                  <Route path="/assigned" element={<AssignedToMe />} />
+                  <Route path="/team" element={<Team />} />
+                  <Route path="/activity" element={<Activity />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Routes>
+              </div>
             </div>
-          </div>
+          </ProtectedLayout>
         }
       />
     </Routes>
