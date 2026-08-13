@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const boardsController = require('../controllers/boardsController');
 const tasksController = require('../controllers/tasksController');
-const { bypassAuth } = require('../middleware/authMiddleware');
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.use(bypassAuth); // Protect all board routes
+router.use(authMiddleware); // Protect all board routes
 
 router.get('/', boardsController.getAllBoards);
 router.post('/', boardsController.createBoard);
