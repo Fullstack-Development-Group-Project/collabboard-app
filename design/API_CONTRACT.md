@@ -98,6 +98,50 @@
   }
   ```
 
+## Columns
+
+### 1. Get Board Columns
+- **Endpoint:** `GET /boards/:boardId/columns`
+- **Description:** Fetches all columns for a specific board.
+- **Response (200 OK):**
+  ```json
+  [
+    {
+      "id": "col1",
+      "boardId": "board1",
+      "title": "To Do",
+      "tasks": []
+    }
+  ]
+  ```
+
+### 2. Create a Column
+- **Endpoint:** `POST /boards/:boardId/columns`
+- **Description:** Adds a new column to a specific board.
+- **Request Body:**
+  ```json
+  {
+    "title": "In Review"
+  }
+  ```
+- **Response (201 Created):** Returns the newly created column object.
+
+### 3. Update a Column
+- **Endpoint:** `PUT /boards/:boardId/columns/:columnId`
+- **Description:** Updates a column's details (e.g. renaming).
+- **Request Body:**
+  ```json
+  {
+    "title": "Testing"
+  }
+  ```
+- **Response (200 OK):** Returns the updated column object.
+
+### 4. Delete a Column
+- **Endpoint:** `DELETE /boards/:boardId/columns/:columnId`
+- **Description:** Removes a column from the board and deletes all associated tasks.
+- **Response (204 No Content)**
+
 ## Tasks
 
 ### 1. Create a Task
