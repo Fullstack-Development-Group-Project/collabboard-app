@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const teamsController = require('../controllers/teamsController');
-const { bypassAuth } = require('../middleware/authMiddleware');
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.use(bypassAuth);
+router.use(authMiddleware);
 
 router.get('/', teamsController.getUserTeams);
 router.post('/', teamsController.createTeam);

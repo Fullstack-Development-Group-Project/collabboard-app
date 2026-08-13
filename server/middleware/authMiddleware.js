@@ -1,14 +1,22 @@
-// Temporary Auth Middleware to bypass real JWT verification while Group B builds Issue #7
+const jwt = require("jsonwebtoken");
 
-const bypassAuth = (req, res, next) => {
-  // Fake the authenticated user (Danindu) from our memoryStore
-  req.user = {
-    id: "user123",
-    name: "Danindu",
-    email: "danindu@example.com",
-    jobTitle: "Software Developer"
-  };
-  next();
-};
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
-module.exports = { bypassAuth };
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Authorization header missing or invalid" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+}
+
+module.exports = authMiddleware;
