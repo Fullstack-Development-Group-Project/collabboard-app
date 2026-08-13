@@ -8,7 +8,7 @@ const apiClient = axios.create({
 });
 
 const getAuthToken = () => {
-  return null;
+  return localStorage.getItem("token");
 };
 
 apiClient.interceptors.request.use(
