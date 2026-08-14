@@ -3,7 +3,7 @@ import { useState } from "react";
 import apiClient from "../API/client";
 import Column from "./Column";
 
-function Board({ board, onColumnAdded, onColumnUpdated, onColumnDeleted }) {
+function Board({ board, onColumnAdded, onColumnUpdated, onColumnDeleted, onTaskAdded, onTaskUpdated, onTaskDeleted }) {
   const [newColumnTitle, setNewColumnTitle] = useState("");
 
   const handleCreateColumn = async (event) => {
@@ -22,6 +22,10 @@ function Board({ board, onColumnAdded, onColumnUpdated, onColumnDeleted }) {
     } catch (error) {
       console.error("Failed to create column:", error);
     }
+  };
+
+  const handleTaskUpdated = (updatedTask) => {
+  onTaskUpdated?.(updatedTask);
   };
 
   return (
@@ -43,8 +47,13 @@ function Board({ board, onColumnAdded, onColumnUpdated, onColumnDeleted }) {
           <Column
             key={column.id}
             column={column}
+            boardId={board.id}
             onColumnRename={onColumnUpdated}
             onColumnDelete={onColumnDeleted}
+            onTaskAdded={onTaskAdded}
+            columns={board.columns || []}
+            onTaskUpdated={handleTaskUpdated}
+            onTaskDeleted={onTaskDeleted}
           />
         ))}
 

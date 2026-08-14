@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import apiClient from "../API/client";
 import TaskCard from "./TaskCard";
 
-function Column({ column, onColumnRename, onColumnDelete }) {
+function Column({ column, boardId, onColumnRename, onColumnDelete, onTaskAdded,  columns, onTaskUpdated, onTaskDeleted }) {
   const [isEditing, setIsEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(column.title || "");
 
@@ -35,8 +35,32 @@ function Column({ column, onColumnRename, onColumnDelete }) {
       await apiClient.delete(`/boards/${column.boardId}/columns/${column.id}`);
       onColumnDelete?.(column.id);
     } catch (error) {
-      console.error("Failed to delete column:", error);
+     
+     console.error("Failed to delete column:", error);
     }
+  };
+
+  const handleAddTask = async () => {
+    try{
+      const newTask = {
+        title: "New Task",
+        description: "Task description",
+        priority: "Medium",
+        columnId: column.id,
+        assignee: "current-user"
+      };
+    
+    const response = await apiClient.post(
+      `/boards/${boardId}/tasks`,
+      newTask
+    );
+
+    console.log("Task created:", response.data);
+    onTaskAdded?.(response.data);
+
+  } catch (error) {
+    console.error("Failed to create task:", error);
+  }
   };
 
   return (
@@ -88,11 +112,18 @@ function Column({ column, onColumnRename, onColumnDelete }) {
 
       <div className="task-list">
         {(column.tasks || []).map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
+  <TaskCard
+    key={task.id}
+    task={task}
+    column={column}
+    columns={columns}
+    onTaskUpdated={onTaskUpdated}
+    onTaskDeleted={onTaskDeleted}
+  />
+))}
       </div>
 
-      <button type="button" className="add-task-btn">
+      <button type="button" className="add-task-btn" onClick={handleAddTask}>
         + Add Task
       </button>
     </section>

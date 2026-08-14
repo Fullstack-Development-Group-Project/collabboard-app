@@ -69,6 +69,66 @@ function BoardPage() {
       };
     });
   };
+  
+  const handleTaskAdded = (newTask) => {
+    setBoard((currentBoard) => {
+      if (!currentBoard) return currentBoard;
+
+      return {
+        ...currentBoard,
+        columns: (currentBoard.columns || []).map((column) => 
+          column.id === newTask.columnId
+            ? { ...column, tasks: [...(column.tasks || []), newTask] }
+            : column
+        ),
+      };
+    });
+  };
+
+  const handleTaskUpdated = (updatedTask) => {
+  setBoard((currentBoard) => {
+    if (!currentBoard) return currentBoard;
+
+    return {
+      ...currentBoard,
+      columns: (currentBoard.columns || []).map((column) => {
+        const remainingTasks = (column.tasks || []).filter(
+          (task) => task.id !== updatedTask.id,
+        );
+
+        if (column.id === updatedTask.columnId) {
+          return {
+            ...column,
+            tasks: [...remainingTasks, updatedTask],
+          };
+        }
+
+        return {
+          ...column,
+          tasks: remainingTasks,
+        };
+      }),
+    };
+  });
+  };
+
+  const handleTaskDeleted = (taskId) => {
+  setBoard((currentBoard) => {
+    if (!currentBoard) return currentBoard;
+
+    return {
+      ...currentBoard,
+      columns: (currentBoard.columns || []).map((column) => ({
+        ...column,
+        tasks: (column.tasks || []).filter(
+          (task) => task.id !== taskId
+        ),
+      })),
+    };
+  });
+};
+
+
 
   if (loading) {
     return (
@@ -103,6 +163,9 @@ function BoardPage() {
             onColumnAdded={handleColumnAdded}
             onColumnUpdated={handleColumnUpdated}
             onColumnDeleted={handleColumnDeleted}
+            onTaskAdded={handleTaskAdded}
+            onTaskUpdated={handleTaskUpdated}
+            onTaskDeleted={handleTaskDeleted}
           />
         ) : (
           <p>No active board found.</p>
