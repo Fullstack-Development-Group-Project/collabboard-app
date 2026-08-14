@@ -1,7 +1,15 @@
+import { useEffect, useState } from "react";
+
 import apiClient from "../API/client";
 
-function TaskCard({ task, column, columns, onTaskUpdated, onTaskDeleted}) {
-  const priorityClass = task.priority.toLowerCase();
+function TaskCard({ task, column, columns, onTaskUpdated, onTaskDeleted }) {
+  const [selectedStatus, setSelectedStatus] = useState(column.title);
+
+  const priorityClass = (task.priority || "").toLowerCase();
+
+  useEffect(() => {
+    setSelectedStatus(column.title);
+  }, [column.title]);
 
   const handleStatusChange = async (event) => {
     const newStatus = event.target.value;
@@ -10,19 +18,32 @@ function TaskCard({ task, column, columns, onTaskUpdated, onTaskDeleted}) {
       (currentColumn) => currentColumn.title === newStatus,
     );
 
-    if (!targetColumn || targetColumn.id === column.id) return;
+    if (!targetColumn || targetColumn.id === column.id) {
+      setSelectedStatus(column.title);
+      return;
+    }
+
+    setSelectedStatus(newStatus);
 
     try {
-      const { data } = await apiClient.put(`/tasks/${task.id}`, {
+      const response = await apiClient.put(`/tasks/${task.id}`, {
         status: newStatus,
         columnId: targetColumn.id,
       });
 
-      onTaskUpdated?.(data);
+      const updatedTask =
+        response.status === 204
+          ? {
+              ...task,
+              status: newStatus,
+              columnId: targetColumn.id,
+            }
+          : response.data;
+
+      onTaskUpdated?.(updatedTask);
     } catch (error) {
       console.error("Failed to update task:", error);
-
-      event.target.value = column.title;
+      setSelectedStatus(column.title);
     }
   };
 
@@ -38,7 +59,7 @@ function TaskCard({ task, column, columns, onTaskUpdated, onTaskDeleted}) {
   return (
     <div className="task-card">
       <div className={`priority-badge ${priorityClass}`}>
-        {task.priority} Priority
+        {task.priority || "Low"} Priority
       </div>
 
       <h3 className="task-title">{task.title}</h3>
@@ -55,7 +76,7 @@ function TaskCard({ task, column, columns, onTaskUpdated, onTaskDeleted}) {
         </div>
 
         <select
-          value={column.title}
+          value={selectedStatus}
           onChange={handleStatusChange}
           aria-label="Task status"
         >

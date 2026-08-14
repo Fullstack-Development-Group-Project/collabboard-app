@@ -29,10 +29,10 @@ function Column({ column, boardId, onColumnRename, onColumnDelete, onTaskAdded, 
   };
 
   const handleDelete = async () => {
-    if (!column.boardId || !column.id) return;
+    if (!boardId || !column.id) return;
 
     try {
-      await apiClient.delete(`/boards/${column.boardId}/columns/${column.id}`);
+      await apiClient.delete(`/boards/${boardId}/columns/${column.id}`);
       onColumnDelete?.(column.id);
     } catch (error) {
      
@@ -41,28 +41,25 @@ function Column({ column, boardId, onColumnRename, onColumnDelete, onTaskAdded, 
   };
 
   const handleAddTask = async () => {
-    try{
-      const newTask = {
-        title: "New Task",
-        description: "Task description",
-        priority: "Medium",
-        columnId: column.id,
-        assignee: "current-user"
-      };
-    
-    const response = await apiClient.post(
-      `/boards/${boardId}/tasks`,
-      newTask
-    );
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
-    console.log("Task created:", response.data);
-    onTaskAdded?.(response.data);
+    const response = await apiClient.post(`/boards/${boardId}/tasks`, {
+      title: "New Task",
+      description: "Task description",
+      priority: "Medium",
+      columnId: column.id,
+      assignee: currentUser.name,
+    });
 
+    const createdTask = response.data;
+
+    console.log("Task created:", createdTask);
+    onTaskAdded?.(createdTask);
   } catch (error) {
     console.error("Failed to create task:", error);
   }
-  };
-
+};
   return (
     <section className="board-column">
       <div className="column-header">
