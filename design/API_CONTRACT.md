@@ -90,7 +90,8 @@
             "title": "Design Wireframes",
             "description": "Create UI wireframes for M1",
             "priority": "High",
-            "assignee": "Danindu"
+            "assignee": "Danindu",
+            "__v":0
           }
         ]
       }
@@ -157,18 +158,30 @@
     "assignee": "Uditha"
   }
   ```
-- **Response (201 Created):** Returns the newly created task object.
+**Response (201 Created):** Returns the newly created task object, including its initial `__v` version.
 
 ### 2. Update a Task
 - **Endpoint:** `PUT /tasks/:id`
 - **Description:** Updates a task's details (like moving it to "Doing").
+- **Concurrency Control:** Uses optimistic concurrency control with Mongoose's `__v` version key. The client must provide the `__v` value it received when updating the task. The update succeeds only if it matches the persisted version; successful updates increment `__v`.
+
 - **Request Body:**
   ```json
   {
-    "columnId": "col2"
+    "columnId": "col2",
+    "__v" : 2
   }
   ```
-- **Response (200 OK):** Returns the updated task object.
+- **Response (200 OK):** Returns the updated task object. __v is incremented.
+- **Conflict (409 Conflict):** Returned when the client's `__v` does not match the persisted task version. The update is not applied.
+  ```json
+  {
+    "error": "CONCURRENT_MODIFICATION",
+    "message": "The task was modified by another user.",
+    "resource": "task",
+    "resourceId": "task1",
+    "currentVersion": 3
+  }
 
 ### 3. Delete a Task
 - **Endpoint:** `DELETE /tasks/:id`
