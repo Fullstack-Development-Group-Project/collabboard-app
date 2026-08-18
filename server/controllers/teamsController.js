@@ -1,119 +1,241 @@
-const db = require('../data/memoryStore');
+const Team = require('../models/Team');
+const Board = require('../models/Board');
+const User = require('../models/User');
+const Notification = require('../models/Notification');
 
-exports.createTeam = (req, res) => {
-  const { name, description } = req.body;
-  const newTeam = {
-    id: "team" + Date.now(),
-    name,
-    description,
-    members: [{ userId: req.user.id, role: "admin" }]
-  };
-  db.teams.push(newTeam);
-  res.status(201).json(newTeam);
-};
+exports.createTeam = async (req, res, next) => {
+  try {
+    const { name, description } = req.body;
+    const trimmedName = name?.trim();
 
-exports.getUserTeams = (req, res) => {
-  const userTeams = db.teams.filter(t => t.members.some(m => m.userId === req.user.id));
-  res.status(200).json(userTeams);
-};
+    if (!trimmedName) {
+      return res.status(400).json({ message: 'Team name is required' });
+    }
 
-exports.getTeamDetails = (req, res) => {
-  const { id } = req.params;
-  const team = db.teams.find(t => t.id === id);
-  if (!team) return res.status(404).json({ message: "Team not found" });
-  res.status(200).json(team);
-};
-
-exports.getTeamBoards = (req, res) => {
-  const { id } = req.params;
-  const teamBoards = db.boards.filter(b => b.teamId === id);
-  res.status(200).json(teamBoards);
-};
-
-exports.updateTeam = (req, res) => {
-  const { id } = req.params;
-  const teamIndex = db.teams.findIndex(t => t.id === id);
-  
-  if (teamIndex === -1) return res.status(404).json({ message: "Team not found" });
-  
-  // Basic admin check
-  const isAdmin = db.teams[teamIndex].members.some(m => m.userId === req.user.id && m.role === "admin");
-  if (!isAdmin) return res.status(403).json({ message: "Admin access required" });
-
-  db.teams[teamIndex] = { ...db.teams[teamIndex], ...req.body };
-  res.status(200).json(db.teams[teamIndex]);
-};
-
-exports.deleteTeam = (req, res) => {
-  const { id } = req.params;
-  const teamIndex = db.teams.findIndex(t => t.id === id);
-  
-  if (teamIndex === -1) return res.status(404).json({ message: "Team not found" });
-
-  const isAdmin = db.teams[teamIndex].members.some(m => m.userId === req.user.id && m.role === "admin");
-  if (!isAdmin) return res.status(403).json({ message: "Admin access required" });
-
-  db.teams.splice(teamIndex, 1);
-  // Also delete associated boards (in-memory cascade)
-  db.boards = db.boards.filter(b => b.teamId !== id);
-  
-  res.status(204).send();
-};
-
-exports.inviteUser = (req, res) => {
-  const { email } = req.body;
-  // In a real app, send email with token. Here, mock notification.
-  const targetUser = db.users.find(u => u.email === email);
-  if (targetUser) {
-    db.notifications.push({
-      id: "notif" + Date.now(),
-      userId: targetUser.id,
-      type: "team_invite",
-      message: `You were invited to join team ${req.params.id}`,
-      teamId: req.params.id,
-      read: false,
-      createdAt: new Date().toISOString()
+    const team = await Team.create({
+      name: trimmedName,
+      description: description || '',
+      members: [{ userId: req.user.id, role: 'admin' }],
+      createdBy: req.user.id,
     });
+
+    res.status(201).json({
+      ...team.toObject(),
+      id: team._id.toString(),
+      createdBy: team.createdBy.toString(),
+      members: team.members.map((member) => ({
+        ...member,
+        userId: member.userId.toString(),
+      })),
+    });
+  } catch (error) {
+    next(error);
   }
-  res.status(201).json({ message: "Invitation sent" });
 };
 
-exports.acceptInvitation = (req, res) => {
-  const { invitationId } = req.params;
-  const notif = db.notifications.find(n => n.id === invitationId);
-  if (!notif) return res.status(404).json({ message: "Invite not found" });
+exports.getUserTeams = async (req, res, next) => {
+  try {
+    const teams = await Team.find({ 'members.userId': req.user.id }).sort({ createdAt: -1 }).lean();
 
-  const team = db.teams.find(t => t.id === notif.teamId);
-  if (team) {
-    team.members.push({ userId: req.user.id, role: "member" });
+    res.status(200).json(teams.map((team) => ({
+      ...team,
+      id: team._id.toString(),
+      createdBy: team.createdBy ? team.createdBy.toString() : null,
+      members: team.members.map((member) => ({ ...member, userId: member.userId.toString() })),
+    })));
+  } catch (error) {
+    next(error);
   }
-  notif.read = true;
-  res.status(200).json({ message: "Joined team" });
 };
 
-exports.leaveTeam = (req, res) => {
-  const { id } = req.params;
-  const team = db.teams.find(t => t.id === id);
-  if (!team) return res.status(404).json({ message: "Team not found" });
+exports.getTeamDetails = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const team = await Team.findById(id).lean();
 
-  team.members = team.members.filter(m => m.userId !== req.user.id);
-  res.status(204).send();
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    res.status(200).json({
+      ...team,
+      id: team._id.toString(),
+      createdBy: team.createdBy ? team.createdBy.toString() : null,
+      members: team.members.map((member) => ({ ...member, userId: member.userId.toString() })),
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-exports.removeMember = (req, res) => {
-  const { id, userId } = req.params;
-  const team = db.teams.find(t => t.id === id);
-  if (!team) return res.status(404).json({ message: "Team not found" });
+exports.getTeamBoards = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const boards = await Board.find({ teamId: id }).sort({ createdAt: -1 }).lean();
 
-  const isAdmin = team.members.some(m => m.userId === req.user.id && m.role === "admin");
-  if (!isAdmin) return res.status(403).json({ message: "Admin access required" });
-
-  if (req.body.action === "remove") {
-    team.members = team.members.filter(m => m.userId !== userId);
-  } else if (req.body.role) {
-    const member = team.members.find(m => m.userId === userId);
-    if (member) member.role = req.body.role;
+    res.status(200).json(boards.map((board) => ({
+      ...board,
+      id: board._id.toString(),
+      teamId: board.teamId ? board.teamId.toString() : null,
+      createdBy: board.createdBy ? board.createdBy.toString() : null,
+    })));
+  } catch (error) {
+    next(error);
   }
-  
-  res.status(200).json(team);
+};
+
+exports.updateTeam = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const team = await Team.findById(id);
+
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    const isAdmin = team.members.some((member) => String(member.userId) === String(req.user.id) && member.role === 'admin');
+    if (!isAdmin) {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const updatedTeam = await Team.findByIdAndUpdate(
+      id,
+      { $set: { ...req.body } },
+      { new: true, runValidators: true },
+    );
+
+    res.status(200).json({
+      ...updatedTeam.toObject(),
+      id: updatedTeam._id.toString(),
+      createdBy: updatedTeam.createdBy.toString(),
+      members: updatedTeam.members.map((member) => ({ ...member, userId: member.userId.toString() })),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteTeam = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const team = await Team.findById(id);
+
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    const isAdmin = team.members.some((member) => String(member.userId) === String(req.user.id) && member.role === 'admin');
+    if (!isAdmin) {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    await Team.findByIdAndDelete(id);
+    await Board.deleteMany({ teamId: id });
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.inviteUser = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const { id } = req.params;
+    const targetUser = await User.findOne({ email: email?.trim().toLowerCase() });
+
+    if (targetUser) {
+      await Notification.create({
+        userId: targetUser._id,
+        type: 'team_invite',
+        message: `You were invited to join team ${id}`,
+        teamId: id,
+        read: false,
+      });
+    }
+
+    res.status(201).json({ message: 'Invitation sent' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.acceptInvitation = async (req, res, next) => {
+  try {
+    const { invitationId } = req.params;
+    const notification = await Notification.findById(invitationId);
+
+    if (!notification) {
+      return res.status(404).json({ message: 'Invite not found' });
+    }
+
+    const team = await Team.findById(notification.teamId);
+    if (team) {
+      const existingMember = team.members.some((member) => String(member.userId) === String(req.user.id));
+      if (!existingMember) {
+        team.members.push({ userId: req.user.id, role: 'member' });
+        await team.save();
+      }
+    }
+
+    notification.read = true;
+    await notification.save();
+
+    res.status(200).json({ message: 'Joined team' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.leaveTeam = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const team = await Team.findById(id);
+
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    team.members = team.members.filter((member) => String(member.userId) !== String(req.user.id));
+    await team.save();
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.removeMember = async (req, res, next) => {
+  try {
+    const { id, userId } = req.params;
+    const team = await Team.findById(id);
+
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    const isAdmin = team.members.some((member) => String(member.userId) === String(req.user.id) && member.role === 'admin');
+    if (!isAdmin) {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    if (req.body.action === 'remove') {
+      team.members = team.members.filter((member) => String(member.userId) !== String(userId));
+    } else if (req.body.role) {
+      const member = team.members.find((entry) => String(entry.userId) === String(userId));
+      if (member) {
+        member.role = req.body.role;
+      }
+    }
+
+    await team.save();
+    res.status(200).json({
+      ...team.toObject(),
+      id: team._id.toString(),
+      createdBy: team.createdBy.toString(),
+      members: team.members.map((member) => ({ ...member, userId: member.userId.toString() })),
+    });
+  } catch (error) {
+    next(error);
+  }
 };

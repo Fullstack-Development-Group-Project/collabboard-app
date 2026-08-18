@@ -1,76 +1,103 @@
-const db = require('../data/memoryStore');
+const Board = require('../models/Board');
+const Column = require('../models/Column');
+const Task = require('../models/Task');
+const Team = require('../models/Team');
 
-exports.getAllBoards = (req, res) => {
-  const userTeams = db.teams
-    .filter((team) => team.members.some((member) => member.userId === req.user.id))
-    .map((team) => team.id);
+const buildBoardResponse = async (boardId) => {
+  const board = await Board.findById(boardId).lean();
+  if (!board) return null;
 
-  const userBoards = db.boards.filter(
-    (board) => board.teamId === null || userTeams.includes(board.teamId),
-  );
+  const columns = await Column.find({ boardId: board._id }).sort({ position: 1 }).lean();
+  const columnIds = columns.map((column) => column._id);
+  const tasks = await Task.find({ columnId: { $in: columnIds } }).lean();
 
-  res.status(200).json(userBoards);
-};
-
-exports.getBoardById = (req, res) => {
-  const boardId = req.params.id;
-  const board = db.boards.find((currentBoard) => currentBoard.id === boardId);
-
-  if (!board) return res.status(404).json({ message: 'Board not found' });
-
-  const boardColumns = Array.isArray(board.columns) && board.columns.length > 0
-    ? board.columns.map((column) => ({
-        ...column,
-        tasks: db.tasks.filter(
-          (task) => task.boardId === boardId && task.columnId === column.id,
-        ),
-      }))
-    : [
-        {
-          id: 'col1',
-          title: 'To Do',
-          boardId,
-          tasks: db.tasks.filter((task) => task.boardId === boardId && task.columnId === 'col1'),
-        },
-        {
-          id: 'col2',
-          title: 'Doing',
-          boardId,
-          tasks: db.tasks.filter((task) => task.boardId === boardId && task.columnId === 'col2'),
-        },
-        {
-          id: 'col3',
-          title: 'Done',
-          boardId,
-          tasks: db.tasks.filter((task) => task.boardId === boardId && task.columnId === 'col3'),
-        },
-      ];
-
-  res.status(200).json({
-    ...board,
-    columns: boardColumns,
-  });
-};
-
-exports.createBoard = (req, res) => {
-  const { title, teamId } = req.body;
-  const newBoard = {
-    id: 'board' + Date.now(),
-    title,
-    teamId: teamId || null,
-    createdAt: new Date().toISOString(),
-    columns: [
-      { id: 'col1', boardId: null, title: 'To Do' },
-      { id: 'col2', boardId: null, title: 'Doing' },
-      { id: 'col3', boardId: null, title: 'Done' },
-    ],
-  };
-
-  newBoard.columns = newBoard.columns.map((column) => ({
+  const columnsWithTasks = columns.map((column) => ({
     ...column,
-    boardId: newBoard.id,
+    tasks: tasks.filter((task) => String(task.columnId) === String(column._id)),
   }));
 
-  db.boards.push(newBoard);
-  res.status(201).json(newBoard);
+  return {
+    ...board,
+    id: board._id.toString(),
+    teamId: board.teamId ? board.teamId.toString() : null,
+    createdBy: board.createdBy ? board.createdBy.toString() : null,
+    columns: columnsWithTasks,
+  };
+};
+
+exports.getAllBoards = async (req, res, next) => {
+  try {
+    const userTeams = await Team.find({ 'members.userId': req.user.id }).select('_id');
+    const teamIds = userTeams.map((team) => team._id);
+
+    const boards = await Board.find({
+      $or: [{ teamId: null }, { teamId: { $in: teamIds } }],
+    }).sort({ createdAt: -1 }).lean();
+
+    res.status(200).json(
+      boards.map((board) => ({
+        ...board,
+        id: board._id.toString(),
+        teamId: board.teamId ? board.teamId.toString() : null,
+        createdBy: board.createdBy ? board.createdBy.toString() : null,
+      })),
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getBoardById = async (req, res, next) => {
+  try {
+    const board = await Board.findById(req.params.id).lean();
+    if (!board) {
+      return res.status(404).json({ message: 'Board not found' });
+    }
+
+    const boardResponse = await buildBoardResponse(board._id);
+    res.status(200).json(boardResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createBoard = async (req, res, next) => {
+  try {
+    const { title, teamId } = req.body;
+    const trimmedTitle = title?.trim();
+
+    if (!trimmedTitle) {
+      return res.status(400).json({ message: 'Board title is required' });
+    }
+
+    if (teamId) {
+      const team = await Team.findOne({ _id: teamId, 'members.userId': req.user.id }).lean();
+      if (!team) {
+        return res.status(403).json({ message: 'You do not have access to that team' });
+      }
+    }
+
+    const board = await Board.create({
+      title: trimmedTitle,
+      teamId: teamId || null,
+      createdBy: req.user.id,
+      isPersonal: !teamId,
+    });
+
+    const defaultColumns = ['To Do', 'Doing', 'Done'].map((columnTitle, index) => ({
+      boardId: board._id,
+      title: columnTitle,
+      position: index,
+    }));
+
+    const createdColumns = await Column.insertMany(defaultColumns);
+    await Board.findByIdAndUpdate(board._id, {
+      $set: { columns: createdColumns.map((column) => column._id) },
+    });
+
+    const boardResponse = await buildBoardResponse(board._id);
+    res.status(201).json(boardResponse);
+  } catch (error) {
+    next(error);
+  }
 };
