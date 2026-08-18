@@ -1,9 +1,20 @@
-const db = require('../data/memoryStore');
+const Activity = require('../models/Activity');
 
-exports.getBoardActivity = (req, res) => {
-  const { id } = req.params;
-  const boardActivities = db.activities.filter(a => a.boardId === id);
-  // Sort descending by timestamp
-  boardActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  res.status(200).json(boardActivities);
+exports.getBoardActivity = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const activities = await Activity.find({ boardId: id }).sort({ createdAt: -1 }).lean();
+
+    res.status(200).json(
+      activities.map((activity) => ({
+        ...activity,
+        id: activity._id.toString(),
+        userId: activity.userId ? activity.userId.toString() : null,
+        boardId: activity.boardId ? activity.boardId.toString() : null,
+        taskId: activity.taskId ? activity.taskId.toString() : null,
+      })),
+    );
+  } catch (error) {
+    next(error);
+  }
 };

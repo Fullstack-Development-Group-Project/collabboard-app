@@ -1,129 +1,134 @@
-const db = require('../data/memoryStore');
+const Board = require('../models/Board');
+const Column = require('../models/Column');
+const Task = require('../models/Task');
 
-const getBoardColumns = (boardId) => {
-  const board = db.boards.find((currentBoard) => currentBoard.id === boardId);
+const getBoardColumns = async (boardId) => {
+  const columns = await Column.find({ boardId }).sort({ position: 1 }).lean();
+  const columnIds = columns.map((column) => column._id);
+  const tasks = await Task.find({ columnId: { $in: columnIds } }).lean();
 
-  if (!board) return [];
-
-  const boardColumns = Array.isArray(board.columns) && board.columns.length > 0
-    ? board.columns
-    : [
-        { id: 'col1', boardId, title: 'To Do' },
-        { id: 'col2', boardId, title: 'Doing' },
-        { id: 'col3', boardId, title: 'Done' },
-      ];
-
-  return boardColumns.map((column) => ({
+  return columns.map((column) => ({
     ...column,
-    boardId,
-    tasks: db.tasks.filter((task) => task.boardId === boardId && task.columnId === column.id),
+    id: column._id.toString(),
+    boardId: column.boardId.toString(),
+    tasks: tasks.filter((task) => String(task.columnId) === String(column._id)),
   }));
 };
 
-exports.getBoardColumnsList = (req, res) => {
-  const { boardId } = req.params;
-  const board = db.boards.find((currentBoard) => currentBoard.id === boardId);
+exports.getBoardColumnsList = async (req, res, next) => {
+  try {
+    const { boardId } = req.params;
+    const board = await Board.findById(boardId);
 
-  if (!board) {
-    return res.status(404).json({ message: 'Board not found' });
+    if (!board) {
+      return res.status(404).json({ message: 'Board not found' });
+    }
+
+    const columns = await getBoardColumns(boardId);
+    res.status(200).json(columns);
+  } catch (error) {
+    next(error);
   }
-
-  res.status(200).json(getBoardColumns(boardId));
 };
 
-exports.createBoardColumn = (req, res) => {
-  const { boardId } = req.params;
-  const { title } = req.body;
-  const board = db.boards.find((currentBoard) => currentBoard.id === boardId);
+exports.createBoardColumn = async (req, res, next) => {
+  try {
+    const { boardId } = req.params;
+    const { title } = req.body;
+    const board = await Board.findById(boardId);
 
-  if (!board) {
-    return res.status(404).json({ message: 'Board not found' });
+    if (!board) {
+      return res.status(404).json({ message: 'Board not found' });
+    }
+
+    const trimmedTitle = title?.trim();
+    if (!trimmedTitle) {
+      return res.status(400).json({ message: 'Column title is required' });
+    }
+
+    const nextPosition = (board.columns?.length || 0);
+    const newColumn = await Column.create({
+      boardId,
+      title: trimmedTitle,
+      position: nextPosition,
+    });
+
+    board.columns.push(newColumn._id);
+    await board.save();
+
+    res.status(201).json({
+      id: newColumn._id.toString(),
+      boardId: newColumn.boardId.toString(),
+      title: newColumn.title,
+      position: newColumn.position,
+      tasks: [],
+    });
+  } catch (error) {
+    next(error);
   }
-
-  const trimmedTitle = title?.trim();
-  if (!trimmedTitle) {
-    return res.status(400).json({ message: 'Column title is required' });
-  }
-
-  const newColumn = {
-    id: `col${Date.now()}`,
-    boardId,
-    title: trimmedTitle,
-  };
-
-  if (!Array.isArray(board.columns)) {
-    board.columns = [];
-  }
-
-  board.columns.push(newColumn);
-
-  res.status(201).json({
-    ...newColumn,
-    tasks: [],
-  });
 };
 
-exports.updateBoardColumn = (req, res) => {
-  const { boardId, columnId } = req.params;
-  const { title } = req.body;
-  const board = db.boards.find((currentBoard) => currentBoard.id === boardId);
+exports.updateBoardColumn = async (req, res, next) => {
+  try {
+    const { boardId, columnId } = req.params;
+    const { title } = req.body;
 
-  if (!board) {
-    return res.status(404).json({ message: 'Board not found' });
+    const board = await Board.findById(boardId);
+    if (!board) {
+      return res.status(404).json({ message: 'Board not found' });
+    }
+
+    const column = await Column.findOne({ _id: columnId, boardId });
+    if (!column) {
+      return res.status(404).json({ message: 'Column not found' });
+    }
+
+    const trimmedTitle = title?.trim();
+    if (!trimmedTitle) {
+      return res.status(400).json({ message: 'Column title is required' });
+    }
+
+    column.title = trimmedTitle;
+    await column.save();
+
+    const tasks = await Task.find({ boardId, columnId: column._id }).lean();
+    res.status(200).json({
+      id: column._id.toString(),
+      boardId: column.boardId.toString(),
+      title: column.title,
+      position: column.position,
+      tasks,
+    });
+  } catch (error) {
+    next(error);
   }
-
-  const columnIndex = board.columns?.findIndex((column) => column.id === columnId);
-  if (columnIndex === undefined || columnIndex === -1) {
-    return res.status(404).json({ message: 'Column not found' });
-  }
-
-  const trimmedTitle = title?.trim();
-  if (!trimmedTitle) {
-    return res.status(400).json({ message: 'Column title is required' });
-  }
-
-  board.columns[columnIndex] = {
-    ...board.columns[columnIndex],
-    title: trimmedTitle,
-  };
-
-  const updatedColumn = {
-    ...board.columns[columnIndex],
-    tasks: db.tasks.filter((task) => task.boardId === boardId && task.columnId === columnId),
-  };
-
-  res.status(200).json(updatedColumn);
 };
 
-exports.deleteBoardColumn = (req, res) => {
-  const { boardId, columnId } = req.params;
-  const board = db.boards.find((currentBoard) => currentBoard.id === boardId);
+exports.deleteBoardColumn = async (req, res, next) => {
+  try {
+    const { boardId, columnId } = req.params;
+    const board = await Board.findById(boardId);
 
-  if (!board) {
-    return res.status(404).json({ message: 'Board not found' });
+    if (!board) {
+      return res.status(404).json({ message: 'Board not found' });
+    }
+
+    const column = await Column.findOne({ _id: columnId, boardId });
+    if (!column) {
+      return res.status(404).json({ message: 'Column not found' });
+    }
+
+    board.columns = board.columns.filter((id) => String(id) !== String(column._id));
+    await board.save();
+    await Task.deleteMany({ boardId, columnId: column._id });
+    await Column.findByIdAndDelete(column._id);
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
   }
-
-  if (!Array.isArray(board.columns)) {
-    return res.status(404).json({ message: 'Column not found' });
-  }
-
-  const columnIndex = board.columns.findIndex((column) => column.id === columnId);
-  if (columnIndex === -1) {
-    return res.status(404).json({ message: 'Column not found' });
-  }
-
-  const [deletedColumn] = board.columns.splice(columnIndex, 1);
-  db.tasks = db.tasks.filter((task) => !(task.boardId === boardId && task.columnId === deletedColumn.id));
-
-  res.status(204).send();
 };
 
-exports.buildBoardResponse = (boardId) => {
-  const board = db.boards.find((currentBoard) => currentBoard.id === boardId);
-  if (!board) return null;
-
-  return {
-    ...board,
-    columns: getBoardColumns(boardId),
-  };
+exports.buildBoardResponse = async (boardId) => {
+  return buildBoardResponse(boardId);
 };
