@@ -4,10 +4,13 @@ import Topbar from "../components/Topbar";
 import Board from "../components/Board";
 import apiClient from "../API/client";
 
+const CACHE_KEY = "collabboard_board";
+
 function BoardPage() {
   const [board, setBoard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isOffline, setIsOffline] = useState(false);
 
   const fetchBoard = async () => {
     try {
@@ -20,10 +23,21 @@ function BoardPage() {
       }
 
       const boardRes = await apiClient.get(`/boards/${activeBoard.id}`);
-      setBoard(boardRes.data);
+      const fetchedBoard = boardRes.data;
+
+      setBoard(fetchedBoard);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(fetchedBoard));
     } catch (err) {
       console.error("Failed to fetch board data:", err);
+
+      const cachedBoard = localStorage.getItem(CACHE_KEY);
+
+      if (cachedBoard) {
+        setBoard(JSON.parse(cachedBoard));    
+        setIsOffline(true);
+      }else {
       setError("Unable to load board data right now.");
+      }
     } finally {
       setLoading(false);
     }
@@ -157,6 +171,11 @@ function BoardPage() {
       <Topbar title={board?.title || "Website Redesign"} />
 
       <main className="content-area">
+        {isOffline && (
+          <div className="offline-banner" role="status">
+            <p>Offline Mode - You are currently viewing offline data.</p>
+          </div>
+        )}
         {board ? (
           <Board
             board={board}
