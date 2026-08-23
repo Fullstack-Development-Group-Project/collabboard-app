@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router";
 
 import Sidebar from "./components/Sidebar";
+import ConflictModal from "./components/ConflictModal";
 
 import Dashboard from "./pages/Dashboard";
 import BoardPage from "./pages/BoardPage";
@@ -39,6 +40,7 @@ function App() {
           <ProtectedLayout>
             <div className="app-layout">
               <Sidebar />
+              <ConflictModal />
 
               <div className="main-content">
                 <Routes>
