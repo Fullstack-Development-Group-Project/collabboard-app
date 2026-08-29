@@ -27,6 +27,9 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response && error.response.status === 409) {
+      window.dispatchEvent(new CustomEvent('api-conflict'));
+    }
     console.error("API request failed:", error);
     return Promise.reject(error);
   },
