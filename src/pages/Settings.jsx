@@ -1,6 +1,19 @@
+import { useMemo } from "react";
 import Topbar from "../components/Topbar";
 
 function Settings() {
+  const user = useMemo(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  }, []);
+
+  const userName = user?.name || "User";
+  const userEmail = user?.email || "user@example.com";
+  const userInitials = userName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) || "U";
   return (
     <div className="page-wrapper">
       <Topbar title="Settings" />
@@ -43,7 +56,7 @@ function Settings() {
             <div className="settings-divider"></div>
 
             <div className="profile-picture-section">
-              <div className="settings-avatar">N</div>
+              <div className="settings-avatar">{userInitials}</div>
 
               <div className="profile-picture-info">
                 <h3>Profile Picture</h3>
@@ -65,7 +78,7 @@ function Settings() {
                   <input
                     id="fullName"
                     type="text"
-                    defaultValue="Nethupa"
+                    defaultValue={userName}
                   />
                 </div>
 
@@ -74,7 +87,7 @@ function Settings() {
                   <input
                     id="email"
                     type="email"
-                    defaultValue="nethupa@gmail.com"
+                    defaultValue={userEmail}
                   />
                 </div>
               </div>

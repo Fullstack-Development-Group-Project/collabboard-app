@@ -2,18 +2,29 @@ const Task = require('../models/Task');
 const Activity = require('../models/Activity');
 const Board = require('../models/Board');
 const Column = require('../models/Column');
+const db = require('../data/memoryStore');
 
 exports.getAssignedTasks = async (req, res, next) => {
   try {
-    const tasks = await Task.find({ assignee: req.user.id }).sort({ createdAt: -1 }).lean();
-    res.status(200).json(tasks.map((task) => ({
-      ...task,
-      id: task._id.toString(),
-      boardId: task.boardId ? task.boardId.toString() : null,
-      columnId: task.columnId ? task.columnId.toString() : null,
-      assignee: task.assignee ? task.assignee.toString() : null,
-      reporter: task.reporter ? task.reporter.toString() : null,
-    })));
+    // Try database first
+    try {
+      const tasks = await Task.find({ assignee: req.user.id }).sort({ createdAt: -1 }).lean();
+      return res.status(200).json(tasks.map((task) => ({
+        ...task,
+        id: task._id.toString(),
+        boardId: task.boardId ? task.boardId.toString() : null,
+        columnId: task.columnId ? task.columnId.toString() : null,
+        assignee: task.assignee ? task.assignee.toString() : null,
+        reporter: task.reporter ? task.reporter.toString() : null,
+      })));
+    } catch (dbError) {
+      console.log('Database query failed, using memory store for tasks');
+      // Fall back to memory store
+      const tasks = db.tasks.filter(t => t.assignee === req.user.id);
+      return res.status(200).json(tasks.sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      ));
+    }
   } catch (error) {
     next(error);
   }
@@ -29,45 +40,88 @@ exports.createTask = async (req, res, next) => {
       return res.status(400).json({ message: 'Task title is required' });
     }
 
-    const board = await Board.findById(boardId);
-    if (!board) {
-      return res.status(404).json({ message: 'Board not found' });
+    // Try database first
+    try {
+      const board = await Board.findById(boardId);
+      if (!board) {
+        return res.status(404).json({ message: 'Board not found' });
+      }
+
+      const column = await Column.findOne({ _id: columnId, boardId });
+      if (!column) {
+        return res.status(404).json({ message: 'Column not found' });
+      }
+
+      const task = await Task.create({
+        title: trimmedTitle,
+        description: description || '',
+        priority: priority || 'Medium',
+        status: 'To Do',
+        boardId,
+        columnId,
+        assignee: assignee || null,
+        reporter: req.user.id,
+        dueDate: dueDate || null,
+      });
+
+      await Activity.create({
+        userId: req.user.id,
+        userName: req.user.name,
+        boardId,
+        taskId: task._id,
+        action: `created task '${task.title}'`,
+        metadata: { columnId, assignee },
+      });
+
+      return res.status(201).json({
+        ...task.toObject(),
+        id: task._id.toString(),
+        boardId: task.boardId.toString(),
+        columnId: task.columnId.toString(),
+        assignee: task.assignee ? task.assignee.toString() : null,
+        reporter: task.reporter.toString(),
+      });
+    } catch (dbError) {
+      console.log('Database operation failed, using memory store for task creation');
+      // Fall back to memory store
+      const board = db.boards.find(b => b.id === boardId);
+      if (!board) {
+        return res.status(404).json({ message: 'Board not found' });
+      }
+
+      const column = db.columns.find(c => c.id === columnId && c.boardId === boardId);
+      if (!column) {
+        return res.status(404).json({ message: 'Column not found' });
+      }
+
+      const newTaskId = `task${db.tasks.length + 1}`;
+      const newTask = {
+        id: newTaskId,
+        boardId,
+        columnId,
+        title: trimmedTitle,
+        description: description || '',
+        priority: priority || 'Medium',
+        assignee: assignee || null,
+        dueDate: dueDate || null,
+        createdAt: new Date().toISOString(),
+        comments: [],
+      };
+
+      db.tasks.push(newTask);
+
+      // Add activity
+      db.activities.push({
+        id: `act${db.activities.length + 1}`,
+        userId: req.user.id,
+        userName: req.user.name,
+        boardId,
+        action: `created task '${newTask.title}'`,
+        timestamp: new Date().toISOString(),
+      });
+
+      return res.status(201).json(newTask);
     }
-
-    const column = await Column.findOne({ _id: columnId, boardId });
-    if (!column) {
-      return res.status(404).json({ message: 'Column not found' });
-    }
-
-    const task = await Task.create({
-      title: trimmedTitle,
-      description: description || '',
-      priority: priority || 'Medium',
-      status: 'To Do',
-      boardId,
-      columnId,
-      assignee: assignee || null,
-      reporter: req.user.id,
-      dueDate: dueDate || null,
-    });
-
-    await Activity.create({
-      userId: req.user.id,
-      userName: req.user.name,
-      boardId,
-      taskId: task._id,
-      action: `created task '${task.title}'`,
-      metadata: { columnId, assignee },
-    });
-
-    res.status(201).json({
-      ...task.toObject(),
-      id: task._id.toString(),
-      boardId: task.boardId.toString(),
-      columnId: task.columnId.toString(),
-      assignee: task.assignee ? task.assignee.toString() : null,
-      reporter: task.reporter.toString(),
-    });
   } catch (error) {
     next(error);
   }

@@ -1,0 +1,158 @@
+{
+  "info": {
+    "name": "SyncBoard API Collection",
+    "description": "REST API requests for the SyncBoard frontend/backend integration assignment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Danindu\",\n  \"email\": \"danindu@example.com\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/v1/auth/register", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "v1", "auth", "register"] }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"danindu@example.com\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/v1/auth/login", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "v1", "auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Boards",
+      "item": [
+        {
+          "name": "Get All Boards",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <token>" }],
+            "url": { "raw": "http://localhost:5000/api/v1/boards", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "v1", "boards"] }
+          }
+        },
+        {
+          "name": "Create Board",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Marketing Sprint\",\n  \"teamId\": null\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/v1/boards", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "v1", "boards"] }
+          }
+        },
+        {
+          "name": "Get Single Board",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <token>" }],
+            "url": { "raw": "http://localhost:5000/api/v1/boards/:id", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "v1", "boards", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Setup Express\",\n  \"description\": \"Initialize Node.js server\",\n  \"priority\": \"Medium\",\n  \"columnId\": \"col1\",\n  \"assignee\": \"user123\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/v1/boards/:boardId/tasks", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "v1", "boards", ":boardId", "tasks"] }
+          }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnId\": \"col2\",\n  \"__v\": 2\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/v1/tasks/:id", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "v1", "tasks", ":id"] }
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer <token>" }],
+            "url": { "raw": "http://localhost:5000/api/v1/tasks/:id", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "v1", "tasks", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Teams",
+      "item": [
+        {
+          "name": "Create Team",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering Squad\",\n  \"description\": \"Core dev team\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/v1/teams", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "v1", "teams"] }
+          }
+        },
+        {
+          "name": "Get Teams",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <token>" }],
+            "url": { "raw": "http://localhost:5000/api/v1/teams", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "v1", "teams"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "http://localhost:5000/health", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["health"] }
+          }
+        }
+      ]
+    }
+  ]
+}

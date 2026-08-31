@@ -1,30 +1,59 @@
 const Board = require('../models/Board');
 const Column = require('../models/Column');
 const Task = require('../models/Task');
+const db = require('../data/memoryStore');
 
 const getBoardColumns = async (boardId) => {
-  const columns = await Column.find({ boardId }).sort({ position: 1 }).lean();
-  const columnIds = columns.map((column) => column._id);
-  const tasks = await Task.find({ columnId: { $in: columnIds } }).lean();
+  try {
+    const columns = await Column.find({ boardId }).sort({ position: 1 }).lean();
+    const columnIds = columns.map((column) => column._id);
+    const tasks = await Task.find({ columnId: { $in: columnIds } }).lean();
 
+    return columns.map((column) => ({
+      ...column,
+      id: column._id.toString(),
+      boardId: column.boardId.toString(),
+      tasks: tasks.filter((task) => String(task.columnId) === String(column._id)),
+    }));
+  } catch (error) {
+    console.log('Database query failed, falling back to memory store');
+    return null;
+  }
+};
+
+// Get columns from memory store
+const getBoardColumnsFromMemory = (boardId) => {
+  const columns = db.columns.filter(c => c.boardId === boardId);
   return columns.map((column) => ({
     ...column,
-    id: column._id.toString(),
-    boardId: column.boardId.toString(),
-    tasks: tasks.filter((task) => String(task.columnId) === String(column._id)),
+    tasks: db.tasks.filter((task) => task.columnId === column.id),
   }));
 };
 
 exports.getBoardColumnsList = async (req, res, next) => {
   try {
     const { boardId } = req.params;
-    const board = await Board.findById(boardId);
 
+    // Try database first
+    try {
+      const board = await Board.findById(boardId);
+      if (board) {
+        const columns = await getBoardColumns(boardId);
+        if (columns) {
+          return res.status(200).json(columns);
+        }
+      }
+    } catch (dbError) {
+      console.log('Database query failed for columns');
+    }
+
+    // Fall back to memory store
+    const board = db.boards.find(b => b.id === boardId);
     if (!board) {
       return res.status(404).json({ message: 'Board not found' });
     }
 
-    const columns = await getBoardColumns(boardId);
+    const columns = getBoardColumnsFromMemory(boardId);
     res.status(200).json(columns);
   } catch (error) {
     next(error);
@@ -35,32 +64,56 @@ exports.createBoardColumn = async (req, res, next) => {
   try {
     const { boardId } = req.params;
     const { title } = req.body;
-    const board = await Board.findById(boardId);
-
-    if (!board) {
-      return res.status(404).json({ message: 'Board not found' });
-    }
 
     const trimmedTitle = title?.trim();
     if (!trimmedTitle) {
       return res.status(400).json({ message: 'Column title is required' });
     }
 
-    const nextPosition = (board.columns?.length || 0);
-    const newColumn = await Column.create({
+    // Try database first
+    try {
+      const board = await Board.findById(boardId);
+      if (board) {
+        const nextPosition = (board.columns?.length || 0);
+        const newColumn = await Column.create({
+          boardId,
+          title: trimmedTitle,
+          position: nextPosition,
+        });
+
+        board.columns.push(newColumn._id);
+        await board.save();
+
+        return res.status(201).json({
+          id: newColumn._id.toString(),
+          boardId: newColumn.boardId.toString(),
+          title: newColumn.title,
+          position: newColumn.position,
+          tasks: [],
+        });
+      }
+    } catch (dbError) {
+      console.log('Database operation failed, using memory store');
+    }
+
+    // Fall back to memory store
+    const board = db.boards.find(b => b.id === boardId);
+    if (!board) {
+      return res.status(404).json({ message: 'Board not found' });
+    }
+
+    const nextPosition = db.columns.filter(c => c.boardId === boardId).length;
+    const newColumn = {
+      id: `col${db.columns.length + 1}`,
       boardId,
       title: trimmedTitle,
       position: nextPosition,
-    });
+    };
 
-    board.columns.push(newColumn._id);
-    await board.save();
+    db.columns.push(newColumn);
 
     res.status(201).json({
-      id: newColumn._id.toString(),
-      boardId: newColumn.boardId.toString(),
-      title: newColumn.title,
-      position: newColumn.position,
+      ...newColumn,
       tasks: [],
     });
   } catch (error) {
