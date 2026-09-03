@@ -1,7 +1,19 @@
+import { useMemo } from "react";
 import { NavLink } from "react-router";
 import logo from "../assets/collabboard-logo.jpeg";
 
 function Sidebar() {
+  const user = useMemo(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  }, []);
+
+  const userName = user?.name || "User";
+  const userInitials = userName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) || "U";
   const navItems = [
     { path: "/", icon: "▦", label: "Dashboard" },
     { path: "/boards", icon: "◉", label: "My Boards" },
@@ -44,11 +56,11 @@ function Sidebar() {
       </nav>
 
       <div className="profile-link">
-        <div className="profile-avatar">N</div>
+        <div className="profile-avatar">{userInitials}</div>
 
         <div className="profile-info">
           <strong>Profile</strong>
-          <span>Nethupa</span>
+          <span>{userName}</span>
         </div>
       </div>
     </aside>

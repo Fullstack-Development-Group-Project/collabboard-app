@@ -1,6 +1,24 @@
+import { useMemo } from "react";
 import Topbar from "../components/Topbar";
 
 function Dashboard() {
+  const user = useMemo(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  }, []);
+
+  const userName = user?.name || "User";
+  const greeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
   const stats = [
     { label: "TOTAL BOARDS", value: "12", icon: "◉" },
     { label: "TASKS ASSIGNED", value: "8", icon: "▣" },
@@ -53,7 +71,7 @@ function Dashboard() {
 
       <main className="dashboard-page">
         <section className="dashboard-intro">
-          <h1>Good afternoon, Nethupa</h1>
+          <h1>{greeting()}, {userName}</h1>
           <p>Here is what's happening with your projects today.</p>
         </section>
 

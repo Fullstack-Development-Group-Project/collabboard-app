@@ -1,4 +1,17 @@
+import { useMemo } from "react";
+
 function Topbar({ title = "CollabBoard", showSearch = true }) {
+  const user = useMemo(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  }, []);
+
+  const userInitials = user?.name?.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) || "U";
+
   return (
     <header className="topbar">
       <div className="workspace-title">
@@ -19,9 +32,7 @@ function Topbar({ title = "CollabBoard", showSearch = true }) {
         )}
 
         <div className="member-avatars">
-          <span>N</span>
-          <span>I</span>
-          <span>U</span>
+          <span title={user?.name || "User"}>{userInitials}</span>
         </div>
 
         <button className="invite-btn">
