@@ -20,7 +20,8 @@ const connectDB = async () => {
     return true;
   } catch (error) {
     console.error('MongoDB connection failed:', error.message);
-    process.exit(1);
+    console.warn('Gracefully falling back to in-memory store.');
+    return false;
   }
 };
 

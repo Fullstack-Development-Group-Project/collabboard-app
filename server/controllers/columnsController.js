@@ -121,37 +121,53 @@ exports.createBoardColumn = async (req, res, next) => {
   }
 };
 
+const { isDbConnected, persistMemoryStore } = require('../utils/dbUtils');
+
 exports.updateBoardColumn = async (req, res, next) => {
   try {
     const { boardId, columnId } = req.params;
     const { title } = req.body;
-
-    const board = await Board.findById(boardId);
-    if (!board) {
-      return res.status(404).json({ message: 'Board not found' });
-    }
-
-    const column = await Column.findOne({ _id: columnId, boardId });
-    if (!column) {
-      return res.status(404).json({ message: 'Column not found' });
-    }
-
+    
     const trimmedTitle = title?.trim();
     if (!trimmedTitle) {
       return res.status(400).json({ message: 'Column title is required' });
     }
 
-    column.title = trimmedTitle;
-    await column.save();
+    if (isDbConnected()) {
+      const board = await Board.findById(boardId);
+      if (!board) return res.status(404).json({ message: 'Board not found' });
 
-    const tasks = await Task.find({ boardId, columnId: column._id }).lean();
-    res.status(200).json({
-      id: column._id.toString(),
-      boardId: column.boardId.toString(),
-      title: column.title,
-      position: column.position,
-      tasks,
-    });
+      const column = await Column.findOne({ _id: columnId, boardId });
+      if (!column) return res.status(404).json({ message: 'Column not found' });
+
+      column.title = trimmedTitle;
+      await column.save();
+
+      const tasks = await Task.find({ boardId, columnId: column._id }).lean();
+      return res.status(200).json({
+        id: column._id.toString(),
+        boardId: column.boardId.toString(),
+        title: column.title,
+        position: column.position,
+        tasks,
+      });
+    } else {
+      // Memory Store Fallback
+      const board = db.boards.find(b => b.id === boardId);
+      if (!board) return res.status(404).json({ message: 'Board not found' });
+
+      const column = db.columns.find(c => c.id === columnId && c.boardId === boardId);
+      if (!column) return res.status(404).json({ message: 'Column not found' });
+
+      column.title = trimmedTitle;
+      persistMemoryStore();
+
+      const tasks = db.tasks.filter(t => t.columnId === columnId);
+      return res.status(200).json({
+        ...column,
+        tasks,
+      });
+    }
   } catch (error) {
     next(error);
   }
@@ -160,23 +176,35 @@ exports.updateBoardColumn = async (req, res, next) => {
 exports.deleteBoardColumn = async (req, res, next) => {
   try {
     const { boardId, columnId } = req.params;
-    const board = await Board.findById(boardId);
 
-    if (!board) {
-      return res.status(404).json({ message: 'Board not found' });
+    if (isDbConnected()) {
+      const board = await Board.findById(boardId);
+      if (!board) return res.status(404).json({ message: 'Board not found' });
+
+      const column = await Column.findOne({ _id: columnId, boardId });
+      if (!column) return res.status(404).json({ message: 'Column not found' });
+
+      board.columns = board.columns.filter((id) => String(id) !== String(column._id));
+      await board.save();
+      await Task.deleteMany({ boardId, columnId: column._id });
+      await Column.findByIdAndDelete(column._id);
+
+      return res.status(204).send();
+    } else {
+      // Memory Store Fallback
+      const board = db.boards.find(b => b.id === boardId);
+      if (!board) return res.status(404).json({ message: 'Board not found' });
+
+      const columnIndex = db.columns.findIndex(c => c.id === columnId && c.boardId === boardId);
+      if (columnIndex === -1) return res.status(404).json({ message: 'Column not found' });
+
+      db.columns.splice(columnIndex, 1);
+      // Remove associated tasks
+      db.tasks = db.tasks.filter(t => t.columnId !== columnId);
+      persistMemoryStore();
+
+      return res.status(204).send();
     }
-
-    const column = await Column.findOne({ _id: columnId, boardId });
-    if (!column) {
-      return res.status(404).json({ message: 'Column not found' });
-    }
-
-    board.columns = board.columns.filter((id) => String(id) !== String(column._id));
-    await board.save();
-    await Task.deleteMany({ boardId, columnId: column._id });
-    await Column.findByIdAndDelete(column._id);
-
-    res.status(204).send();
   } catch (error) {
     next(error);
   }

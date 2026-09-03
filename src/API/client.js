@@ -25,7 +25,12 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.headers && response.headers['x-database-status'] === 'offline') {
+      window.dispatchEvent(new CustomEvent('database-offline'));
+    }
+    return response;
+  },
   (error) => {
     if (error.response && error.response.status === 409) {
       window.dispatchEvent(new CustomEvent('api-conflict'));

@@ -23,9 +23,16 @@ exports.updateUserProfile = async (req, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    const { name, email, jobTitle, bio } = req.body;
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (email !== undefined) updates.email = email;
+    if (jobTitle !== undefined) updates.jobTitle = jobTitle;
+    if (bio !== undefined) updates.bio = bio;
+
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      { $set: { ...req.body } },
+      { $set: updates },
       { new: true, runValidators: true },
     ).select('-password');
 
