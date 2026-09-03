@@ -12,6 +12,14 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+const { isDbConnected } = require('./utils/dbUtils');
+app.use((req, res, next) => {
+  if (!isDbConnected()) {
+    res.setHeader('X-Database-Status', 'offline');
+  }
+  next();
+});
+
 const authRoutes = require('./routes/authRoutes');
 const boardRoutes = require('./routes/boardRoutes');
 const taskRoutes = require('./routes/taskRoutes');

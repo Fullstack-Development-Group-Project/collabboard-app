@@ -98,9 +98,14 @@ exports.updateTeam = async (req, res, next) => {
       return res.status(403).json({ message: 'Admin access required' });
     }
 
+    const { name, description } = req.body;
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (description !== undefined) updates.description = description;
+
     const updatedTeam = await Team.findByIdAndUpdate(
       id,
-      { $set: { ...req.body } },
+      { $set: updates },
       { new: true, runValidators: true },
     );
 

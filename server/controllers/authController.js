@@ -2,8 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const db = require('../data/memoryStore');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+const { JWT_SECRET } = require('../config/jwtConfig');
 
 // Helper function to find user in memory store
 const findUserInMemory = (email) => {

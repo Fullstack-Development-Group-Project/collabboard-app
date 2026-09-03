@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router";
 
 import Sidebar from "./components/Sidebar";
 import ConflictModal from "./components/ConflictModal";
+import DatabaseNotification from "./components/DatabaseNotification";
 
 import Dashboard from "./pages/Dashboard";
 import BoardPage from "./pages/BoardPage";
@@ -41,6 +42,7 @@ function App() {
             <div className="app-layout">
               <Sidebar />
               <ConflictModal />
+              <DatabaseNotification />
 
               <div className="main-content">
                 <Routes>

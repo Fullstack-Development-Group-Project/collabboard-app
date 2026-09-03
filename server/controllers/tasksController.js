@@ -127,38 +127,70 @@ exports.createTask = async (req, res, next) => {
   }
 };
 
+const { isDbConnected, persistMemoryStore } = require('../utils/dbUtils');
+
 exports.updateTask = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const task = await Task.findById(id);
+    const { title, description, priority, status, columnId, assignee, dueDate } = req.body;
+    
+    // Whitelist updates to block mass assignment (e.g. blocking boardId updates)
+    const updates = {};
+    if (title !== undefined) updates.title = title.trim();
+    if (description !== undefined) updates.description = description;
+    if (priority !== undefined) updates.priority = priority;
+    if (status !== undefined) updates.status = status;
+    if (columnId !== undefined) updates.columnId = columnId;
+    if (assignee !== undefined) updates.assignee = assignee;
+    if (dueDate !== undefined) updates.dueDate = dueDate;
 
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
+    if (isDbConnected()) {
+      const task = await Task.findById(id);
+      if (!task) return res.status(404).json({ message: 'Task not found' });
+
+      const updatedTask = await Task.findByIdAndUpdate(
+        id,
+        { $set: updates },
+        { new: true, runValidators: true }
+      );
+
+      await Activity.create({
+        userId: req.user.id,
+        userName: req.user.name,
+        boardId: updatedTask.boardId,
+        taskId: updatedTask._id,
+        action: `updated task '${updatedTask.title}'`,
+        metadata: { fields: Object.keys(updates) },
+      });
+
+      return res.status(200).json({
+        ...updatedTask.toObject(),
+        id: updatedTask._id.toString(),
+        boardId: updatedTask.boardId.toString(),
+        columnId: updatedTask.columnId.toString(),
+        assignee: updatedTask.assignee ? updatedTask.assignee.toString() : null,
+        reporter: updatedTask.reporter.toString(),
+      });
+    } else {
+      // Memory Store Fallback
+      const taskIndex = db.tasks.findIndex(t => t.id === id);
+      if (taskIndex === -1) return res.status(404).json({ message: 'Task not found in memory store' });
+
+      const task = db.tasks[taskIndex];
+      db.tasks[taskIndex] = { ...task, ...updates };
+      persistMemoryStore();
+
+      db.activities.push({
+        id: `act${db.activities.length + 1}`,
+        userId: req.user.id,
+        userName: req.user.name,
+        boardId: task.boardId,
+        action: `updated task '${db.tasks[taskIndex].title}'`,
+        timestamp: new Date().toISOString(),
+      });
+
+      return res.status(200).json(db.tasks[taskIndex]);
     }
-
-    const updatedTask = await Task.findByIdAndUpdate(
-      id,
-      { $set: { ...req.body } },
-      { new: true, runValidators: true },
-    );
-
-    await Activity.create({
-      userId: req.user.id,
-      userName: req.user.name,
-      boardId: updatedTask.boardId,
-      taskId: updatedTask._id,
-      action: `updated task '${updatedTask.title}'`,
-      metadata: { fields: Object.keys(req.body) },
-    });
-
-    res.status(200).json({
-      ...updatedTask.toObject(),
-      id: updatedTask._id.toString(),
-      boardId: updatedTask.boardId.toString(),
-      columnId: updatedTask.columnId.toString(),
-      assignee: updatedTask.assignee ? updatedTask.assignee.toString() : null,
-      reporter: updatedTask.reporter.toString(),
-    });
   } catch (error) {
     next(error);
   }
@@ -167,14 +199,21 @@ exports.updateTask = async (req, res, next) => {
 exports.deleteTask = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const task = await Task.findById(id);
 
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
+    if (isDbConnected()) {
+      const task = await Task.findById(id);
+      if (!task) return res.status(404).json({ message: 'Task not found' });
+      await Task.findByIdAndDelete(id);
+      return res.status(204).send();
+    } else {
+      // Memory Store Fallback
+      const taskIndex = db.tasks.findIndex(t => t.id === id);
+      if (taskIndex === -1) return res.status(404).json({ message: 'Task not found in memory store' });
+      
+      db.tasks.splice(taskIndex, 1);
+      persistMemoryStore();
+      return res.status(204).send();
     }
-
-    await Task.findByIdAndDelete(id);
-    res.status(204).send();
   } catch (error) {
     next(error);
   }
