@@ -24,7 +24,7 @@ exports.createTeam = async (req, res, next) => {
       id: team._id.toString(),
       createdBy: team.createdBy.toString(),
       members: team.members.map((member) => ({
-        ...member,
+        ...member.toObject(),
         userId: member.userId.toString(),
       })),
     });
