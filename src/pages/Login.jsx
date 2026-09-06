@@ -3,8 +3,7 @@ import { Link, useNavigate } from "react-router";
 import logo from "../assets/collabboard-logo.jpeg";
 import heroImage from "../assets/hero.png";
 
-const API_BASE = "http://localhost:5000/api/v1";
-
+import apiClient from "../API/client";
 function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -18,24 +17,15 @@ function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
-      }
+      const res = await apiClient.post("/auth/login", { email, password });
+      const data = res.data;
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       navigate("/");
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
       setLoading(false);
     }

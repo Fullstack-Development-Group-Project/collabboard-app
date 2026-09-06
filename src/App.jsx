@@ -14,10 +14,27 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
+import { jwtDecode } from "jwt-decode";
+
 import "./App.css";
 
 function isAuthenticated() {
-  return Boolean(localStorage.getItem("token"));
+  const token = localStorage.getItem("token");
+  if (!token) return false;
+  
+  try {
+    const decoded = jwtDecode(token);
+    if (decoded.exp * 1000 < Date.now()) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      return false;
+    }
+    return true;
+  } catch (error) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    return false;
+  }
 }
 
 function ProtectedLayout({ children }) {
