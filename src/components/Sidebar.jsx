@@ -1,16 +1,11 @@
-import { useMemo } from "react";
-import { NavLink } from "react-router";
+import { useAuth } from "../hooks/useAuth";
+import { NavLink, useNavigate } from "react-router";
 import logo from "../assets/collabboard-logo.jpeg";
 
 function Sidebar() {
-  const user = useMemo(() => {
-    try {
-      const stored = localStorage.getItem("user");
-      return stored ? JSON.parse(stored) : null;
-    } catch (e) {
-      return null;
-    }
-  }, []);
+  const navigate = useNavigate();
+
+  const user = useAuth();
 
   const userName = user?.name || "User";
   const userInitials = userName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) || "U";
@@ -63,6 +58,26 @@ function Sidebar() {
           <span>{userName}</span>
         </div>
       </div>
+
+      <button
+        onClick={() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login");
+        }}
+        style={{
+          marginTop: "16px",
+          padding: "10px",
+          background: "transparent",
+          color: "#dc2626",
+          border: "1px solid #dc2626",
+          borderRadius: "6px",
+          cursor: "pointer",
+          fontWeight: "600"
+        }}
+      >
+        Logout
+      </button>
     </aside>
   );
 }
