@@ -1,15 +1,55 @@
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import Topbar from "../components/Topbar";
+import { useAuth } from "../hooks/useAuth";
+import apiClient from "../API/client";
 
 function Dashboard() {
-  const user = useMemo(() => {
-    try {
-      const stored = localStorage.getItem("user");
-      return stored ? JSON.parse(stored) : null;
-    } catch (e) {
-      return null;
+  const user = useAuth();
+  
+  const [boards, setBoards] = useState([]);
+  const [stats, setStats] = useState([
+    { label: "TOTAL BOARDS", value: "0", icon: "◉" },
+    { label: "TASKS ASSIGNED", value: "0", icon: "▣" },
+    { label: "DUE SOON", value: "0", icon: "◷" },
+    { label: "COMPLETED", value: "0", icon: "✓" },
+  ]);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [boardsRes, tasksRes] = await Promise.all([
+          apiClient.get("/boards"),
+          apiClient.get("/tasks/assigned")
+        ]);
+
+        const fetchedBoards = boardsRes.data.boards || [];
+        const assignedTasks = tasksRes.data.tasks || [];
+
+        setBoards(fetchedBoards);
+
+        const dueSoon = assignedTasks.filter(t => {
+          if (!t.dueDate) return false;
+          const timeDiff = new Date(t.dueDate) - new Date();
+          return timeDiff > 0 && timeDiff < 3 * 24 * 60 * 60 * 1000; // 3 days
+        });
+
+        const completed = assignedTasks.filter(t => t.status === 'Done');
+
+        setStats([
+          { label: "TOTAL BOARDS", value: fetchedBoards.length.toString(), icon: "◉" },
+          { label: "TASKS ASSIGNED", value: assignedTasks.length.toString(), icon: "▣" },
+          { label: "DUE SOON", value: dueSoon.length.toString(), icon: "◷" },
+          { label: "COMPLETED", value: completed.length.toString(), icon: "✓" },
+        ]);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      }
     }
-  }, []);
+
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   const userName = user?.name || "User";
   const greeting = () => {
@@ -18,52 +58,6 @@ function Dashboard() {
     if (hour < 18) return "Good afternoon";
     return "Good evening";
   };
-
-  const stats = [
-    { label: "TOTAL BOARDS", value: "12", icon: "◉" },
-    { label: "TASKS ASSIGNED", value: "8", icon: "▣" },
-    { label: "DUE SOON", value: "3", icon: "◷" },
-    { label: "COMPLETED", value: "45", icon: "✓" },
-  ];
-
-  const boards = [
-    {
-      title: "Website Redesign",
-      description: "Overhauling the corporate marketing site with new...",
-      tasks: "12/34 Tasks",
-      comments: "8",
-      progress: 35,
-      priority: "High",
-      members: ["A", "N", "+3"],
-    },
-    {
-      title: "Mobile App v2.0",
-      description: "React Native development for the upcoming Q3 release...",
-      tasks: "45/50 Tasks",
-      comments: "24",
-      progress: 90,
-      priority: "Medium",
-      members: ["I", "U"],
-    },
-    {
-      title: "Marketing Q1 Campaign",
-      description: "Assets, ad copy, and launch strategy for the new product...",
-      tasks: "5/18 Tasks",
-      comments: "2",
-      progress: 28,
-      priority: "Low",
-      members: ["N"],
-    },
-    {
-      title: "University Partnership",
-      description: "Coordinating internship program rollout with local...",
-      tasks: "20/20 Tasks",
-      comments: "15",
-      progress: 100,
-      priority: "Done",
-      members: ["A", "M"],
-    },
-  ];
 
   return (
     <div className="page-wrapper">
@@ -96,7 +90,7 @@ function Dashboard() {
 
           <div className="dashboard-board-grid">
             {boards.map((board) => (
-              <article className="dashboard-board-card" key={board.title}>
+              <article className="dashboard-board-card" key={board._id || board.id}>
                 <div className="board-card-top">
                   <h3>{board.title}</h3>
                   <button type="button" aria-label="Board options">
@@ -104,37 +98,30 @@ function Dashboard() {
                   </button>
                 </div>
 
-                <p>{board.description}</p>
+                <p>{board.description || "No description provided."}</p>
 
+                {/* Hiding complex relational fields (tasks, comments, progress) for now as requested */}
+                {/* 
                 <div className="board-meta">
-                  <span>☑ {board.tasks}</span>
-                  <span>▢ {board.comments}</span>
+                  <span>☑ {board.tasks || 0}</span>
+                  <span>▢ {board.comments || 0}</span>
                 </div>
-
                 <div className="board-progress-heading">
                   <span>Progress</span>
-                  <span>{board.progress}%</span>
+                  <span>{board.progress || 0}%</span>
                 </div>
-
                 <div className="progress-track">
                   <div
                     className="progress-fill"
-                    style={{ width: `${board.progress}%` }}
+                    style={{ width: `${board.progress || 0}%` }}
                   ></div>
-                </div>
+                </div> 
+                */}
 
-                <div className="board-card-footer">
+                <div className="board-card-footer" style={{ marginTop: '20px' }}>
                   <div className="dashboard-members">
-                    {board.members.map((member) => (
-                      <span key={member}>{member}</span>
-                    ))}
+                    {/* Placeholder for members array if populated in future */}
                   </div>
-
-                  <span
-                    className={`dashboard-priority ${board.priority.toLowerCase()}`}
-                  >
-                    {board.priority}
-                  </span>
                 </div>
               </article>
             ))}
