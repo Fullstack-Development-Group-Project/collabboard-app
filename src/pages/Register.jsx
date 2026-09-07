@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import logo from "../assets/collabboard-logo.jpeg";
 
-const API_BASE = "http://localhost:5000/api/v1";
+import apiClient from "../API/client";
 
 function Register() {
   const navigate = useNavigate();
@@ -25,28 +25,35 @@ function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Registration failed");
-      }
+      const res = await apiClient.post("/auth/register", { name, email, password });
+      const data = res.data;
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       navigate("/");
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
   }
+
+  const calculateStrength = (pass) => {
+    let score = 0;
+    if (pass.length > 5) score += 1;
+    if (pass.length > 8) score += 1;
+    if (/[A-Z]/.test(pass)) score += 1;
+    if (/[0-9]/.test(pass)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+    
+    if (score >= 4) return { label: 'Strong', count: 4, class: 'strong' };
+    if (score >= 3) return { label: 'Good', count: 3, class: 'good' };
+    if (score >= 2) return { label: 'Fair', count: 2, class: 'fair' };
+    if (score >= 1) return { label: 'Weak', count: 1, class: 'weak' };
+    return { label: 'Very Weak', count: 0, class: 'weak' };
+  };
+  const strength = calculateStrength(password);
 
   return (
     <div className="register-page">
@@ -113,13 +120,12 @@ function Register() {
             </div>
 
             <div className="password-strength">
-              <span className="weak"></span>
-              <span></span>
-              <span></span>
-              <span></span>
+              {[1, 2, 3, 4].map(num => (
+                <span key={num} className={num <= strength.count ? strength.class : ""}></span>
+              ))}
             </div>
 
-            <small>Weak password</small>
+            <small>{password ? strength.label + ' password' : 'Enter a password'}</small>
           </div>
 
           <div className="register-form-group">

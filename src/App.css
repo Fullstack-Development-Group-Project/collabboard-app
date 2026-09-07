@@ -2675,6 +2675,18 @@ button {
   background: #dc2626;
 }
 
+.password-strength span.fair {
+  background: #f59e0b;
+}
+
+.password-strength span.good {
+  background: #10b981;
+}
+
+.password-strength span.strong {
+  background: #059669;
+}
+
 .register-form-group small {
   display: block;
   margin-top: 5px;

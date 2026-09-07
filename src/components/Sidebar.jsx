@@ -1,8 +1,10 @@
 import { useMemo } from "react";
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import logo from "../assets/collabboard-logo.jpeg";
 
 function Sidebar() {
+  const navigate = useNavigate();
+
   const user = useMemo(() => {
     try {
       const stored = localStorage.getItem("user");
@@ -63,6 +65,26 @@ function Sidebar() {
           <span>{userName}</span>
         </div>
       </div>
+
+      <button
+        onClick={() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login");
+        }}
+        style={{
+          marginTop: "16px",
+          padding: "10px",
+          background: "transparent",
+          color: "#dc2626",
+          border: "1px solid #dc2626",
+          borderRadius: "6px",
+          cursor: "pointer",
+          fontWeight: "600"
+        }}
+      >
+        Logout
+      </button>
     </aside>
   );
 }
