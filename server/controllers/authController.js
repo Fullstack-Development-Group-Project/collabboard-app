@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const db = require('../data/memoryStore');
 const { JWT_SECRET } = require('../config/jwtConfig');
-
+const { v4: uuidv4 } = require('uuid');
 // Helper function to find user in memory store
 const findUserInMemory = (email) => {
   const trimmedEmail = email?.trim().toLowerCase();
@@ -69,7 +69,7 @@ exports.register = async (req, res, next) => {
       });
     } catch (dbError) {
       // If database fails, create in memory store
-      const newId = `user${db.users.length + 1}`;
+      const newId = uuidv4();
       const newUser = {
         id: newId,
         name: name.trim(),
