@@ -1,19 +1,48 @@
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import Topbar from "../components/Topbar";
+import { useAuth } from "../hooks/useAuth";
+import apiClient from "../API/client";
 
 function Settings() {
-  const user = useMemo(() => {
-    try {
-      const stored = localStorage.getItem("user");
-      return stored ? JSON.parse(stored) : null;
-    } catch (e) {
-      return null;
+  const user = useAuth();
+  
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [bio, setBio] = useState("");
+  const [message, setMessage] = useState(null);
+  const [isError, setIsError] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFullName(user.name || "");
+      setEmail(user.email || "");
+      setJobTitle(user.jobTitle || "");
+      setBio(user.bio || "");
     }
-  }, []);
+  }, [user]);
 
   const userName = user?.name || "User";
-  const userEmail = user?.email || "user@example.com";
   const userInitials = userName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) || "U";
+
+  const handleSave = async () => {
+    setMessage(null);
+    setIsError(false);
+    try {
+      const res = await apiClient.put("/users/me", { name: fullName, jobTitle, bio });
+      const updatedUser = res.data.user || res.data;
+      
+      // Update local storage
+      const stored = JSON.parse(localStorage.getItem("user") || "{}");
+      localStorage.setItem("user", JSON.stringify({ ...stored, ...updatedUser }));
+      
+      setMessage("Profile updated successfully.");
+    } catch (error) {
+      setIsError(true);
+      setMessage(error.response?.data?.message || "Failed to update profile.");
+    }
+  };
+
   return (
     <div className="page-wrapper">
       <Topbar title="Settings" />
@@ -72,13 +101,20 @@ function Settings() {
             <div className="settings-divider"></div>
 
             <form className="profile-form">
+              {message && (
+                <div style={{ marginBottom: '15px', color: isError ? '#dc2626' : '#10b981', fontSize: '14px', fontWeight: '500' }}>
+                  {message}
+                </div>
+              )}
+              
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="fullName">Full Name</label>
                   <input
                     id="fullName"
                     type="text"
-                    defaultValue={userName}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                   />
                 </div>
 
@@ -87,7 +123,9 @@ function Settings() {
                   <input
                     id="email"
                     type="email"
-                    defaultValue={userEmail}
+                    value={email}
+                    disabled
+                    style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
                   />
                 </div>
               </div>
@@ -97,7 +135,9 @@ function Settings() {
                 <input
                   id="role"
                   type="text"
-                  defaultValue="Software Developer"
+                  value={jobTitle}
+                  onChange={(e) => setJobTitle(e.target.value)}
+                  placeholder="Software Developer"
                 />
               </div>
 
@@ -107,10 +147,12 @@ function Settings() {
                   id="bio"
                   rows="5"
                   maxLength="200"
-                  defaultValue="Building seamless collaborative experiences for teams."
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Building seamless collaborative experiences for teams."
                 />
 
-                <div className="bio-counter">0 / 200</div>
+                <div className="bio-counter">{bio.length} / 200</div>
               </div>
 
               <div className="settings-divider"></div>
@@ -126,6 +168,7 @@ function Settings() {
                 <button
                   type="button"
                   className="save-btn"
+                  onClick={handleSave}
                 >
                   Save Changes
                 </button>

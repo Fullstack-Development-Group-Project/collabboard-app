@@ -1,14 +1,7 @@
-import { useMemo } from "react";
+import { useAuth } from "../hooks/useAuth";
 
 function Topbar({ title = "CollabBoard", showSearch = true }) {
-  const user = useMemo(() => {
-    try {
-      const stored = localStorage.getItem("user");
-      return stored ? JSON.parse(stored) : null;
-    } catch (e) {
-      return null;
-    }
-  }, []);
+  const user = useAuth();
 
   const userInitials = user?.name?.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) || "U";
 
