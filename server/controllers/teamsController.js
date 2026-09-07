@@ -157,9 +157,10 @@ exports.inviteUser = async (req, res, next) => {
         teamId: id,
         read: false,
       });
+      res.status(201).json({ message: 'Invitation sent' });
+    } else {
+      res.status(404).json({ message: 'No user found with that email. They can be invited after registering.' });
     }
-
-    res.status(201).json({ message: 'Invitation sent' });
   } catch (error) {
     next(error);
   }

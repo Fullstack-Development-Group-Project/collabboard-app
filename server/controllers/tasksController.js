@@ -3,7 +3,7 @@ const Activity = require('../models/Activity');
 const Board = require('../models/Board');
 const Column = require('../models/Column');
 const db = require('../data/memoryStore');
-
+const { v4: uuidv4 } = require('uuid');
 exports.getAssignedTasks = async (req, res, next) => {
   try {
     // Try database first
@@ -94,7 +94,7 @@ exports.createTask = async (req, res, next) => {
         return res.status(404).json({ message: 'Column not found' });
       }
 
-      const newTaskId = `task${db.tasks.length + 1}`;
+      const newTaskId = uuidv4();
       const newTask = {
         id: newTaskId,
         boardId,
@@ -112,7 +112,7 @@ exports.createTask = async (req, res, next) => {
 
       // Add activity
       db.activities.push({
-        id: `act${db.activities.length + 1}`,
+        id: uuidv4(),
         userId: req.user.id,
         userName: req.user.name,
         boardId,
@@ -181,7 +181,7 @@ exports.updateTask = async (req, res, next) => {
       persistMemoryStore();
 
       db.activities.push({
-        id: `act${db.activities.length + 1}`,
+        id: uuidv4(),
         userId: req.user.id,
         userName: req.user.name,
         boardId: task.boardId,

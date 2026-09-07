@@ -210,6 +210,3 @@ exports.deleteBoardColumn = async (req, res, next) => {
   }
 };
 
-exports.buildBoardResponse = async (boardId) => {
-  return buildBoardResponse(boardId);
-};

@@ -182,6 +182,24 @@ const db = {
       boardId: "board1",
       title: "Done",
       position: 3
+    },
+    {
+      id: "col5",
+      boardId: "board2",
+      title: "To Do",
+      position: 0
+    },
+    {
+      id: "col6",
+      boardId: "board2",
+      title: "In Progress",
+      position: 1
+    },
+    {
+      id: "col7",
+      boardId: "board2",
+      title: "Review",
+      position: 2
     }
   ],
   tasks: [
@@ -248,7 +266,7 @@ const db = {
     {
       id: "task6",
       boardId: "board2",
-      columnId: "col1",
+      columnId: "col5",
       title: "Implement auth routes",
       description: "Create login and registration endpoints",
       assignee: "user7",
@@ -260,7 +278,7 @@ const db = {
     {
       id: "task7",
       boardId: "board2",
-      columnId: "col2",
+      columnId: "col6",
       title: "Setup MongoDB connection",
       description: "Configure Mongoose and database schema",
       assignee: "user5",
@@ -272,7 +290,7 @@ const db = {
     {
       id: "task8",
       boardId: "board2",
-      columnId: "col3",
+      columnId: "col7",
       title: "Create board endpoints",
       description: "Implement CRUD operations for boards",
       assignee: "user8",

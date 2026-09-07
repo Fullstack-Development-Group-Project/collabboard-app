@@ -33,7 +33,7 @@ app.use('/api/v1/boards', boardRoutes);
 app.use('/api/v1/tasks', taskRoutes);
 app.use('/api/v1/teams', teamRoutes);
 app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/boards/:id/activities', activityRoutes);
+app.use('/api/v1/boards/:boardId/activities', activityRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 
 app.get('/health', (req, res) => {
