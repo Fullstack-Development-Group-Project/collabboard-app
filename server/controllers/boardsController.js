@@ -121,7 +121,7 @@ exports.createBoard = async (req, res, next) => {
     }
 
     if (teamId) {
-      const team = await Team.findOne({ _id: teamId, 'members.userId': req.user.id }).lean();
+      const team = await Team.findOne({ _id: { $eq: teamId }, 'members.userId': req.user.id }).lean();
       if (!team) {
         return res.status(403).json({ message: 'You do not have access to that team' });
       }
