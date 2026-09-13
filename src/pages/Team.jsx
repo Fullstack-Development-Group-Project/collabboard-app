@@ -1,36 +1,41 @@
+import { useState, useEffect } from "react";
 import Topbar from "../components/Topbar";
+import apiClient from "../API/client";
 
 function Team() {
-  const members = [
-    {
-      name: "Nethupa",
-      role: "Product Manager",
-      type: "Member",
-      initials: "N",
-      status: "online",
-    },
-    {
-      name: "Induwara",
-      role: "Senior Developer",
-      type: "Member",
-      initials: "I",
-      status: "online",
-    },
-    {
-      name: "Udan",
-      role: "UX Designer",
-      type: "Member",
-      initials: "U",
-      status: "online",
-    },
-    {
-      name: "Danindu",
-      role: "QA Engineer",
-      type: "Member",
-      initials: "D",
-      status: "away",
-    },
-  ];
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      try {
+        const response = await apiClient.get("/teams");
+        const teams = response.data || [];
+        // Flatten all members from all teams the user belongs to, removing duplicates
+        const uniqueMembers = new Map();
+        teams.forEach(team => {
+          team.members.forEach(member => {
+            if (!uniqueMembers.has(member.userId)) {
+              uniqueMembers.set(member.userId, {
+                name: member.name,
+                role: member.role === "admin" ? "Team Admin" : "Member",
+                type: member.role === "admin" ? "Admin" : "Member",
+                initials: member.name.charAt(0).toUpperCase(),
+                status: "online", // Mock status
+                userId: member.userId,
+              });
+            }
+          });
+        });
+        setMembers(Array.from(uniqueMembers.values()));
+      } catch (error) {
+        console.error("Failed to fetch teams:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTeamMembers();
+  }, []);
 
   return (
     <div className="page-wrapper">
@@ -66,34 +71,40 @@ function Team() {
         </div>
 
         <div className="team-grid">
-          {members.map((member) => (
-            <article className="team-card" key={member.name}>
-              <div className="team-avatar-wrapper">
-                <div className="team-avatar">{member.initials}</div>
-                <span
-                  className={`member-status-dot ${member.status}`}
-                ></span>
-              </div>
+          {loading ? (
+            <p style={{ padding: "2rem" }}>Loading team members...</p>
+          ) : members.length === 0 ? (
+            <p style={{ padding: "2rem" }}>No team members found.</p>
+          ) : (
+            members.map((member) => (
+              <article className="team-card" key={member.userId}>
+                <div className="team-avatar-wrapper">
+                  <div className="team-avatar">{member.initials}</div>
+                  <span
+                    className={`member-status-dot ${member.status}`}
+                  ></span>
+                </div>
 
-              <h3>{member.name}</h3>
-              <p>{member.role}</p>
+                <h3>{member.name}</h3>
+                <p>{member.role}</p>
 
-              <div className="team-card-footer">
-                <span
-                  className={`member-role ${member.type.toLowerCase()}`}
-                >
-                  {member.type}
-                </span>
+                <div className="team-card-footer">
+                  <span
+                    className={`member-role ${member.type.toLowerCase()}`}
+                  >
+                    {member.type}
+                  </span>
 
-                <button
-                  className="member-email-btn"
-                  aria-label={`Email ${member.name}`}
-                >
-                  ✉
-                </button>
-              </div>
-            </article>
-          ))}
+                  <button
+                    className="member-email-btn"
+                    aria-label={`Email ${member.name}`}
+                  >
+                    ✉
+                  </button>
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </main>
     </div>

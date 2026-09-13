@@ -1,5 +1,7 @@
 name: Backend CI
 
+permissions: read-all
+
 on:
   push:
     branches: [ "main" ]

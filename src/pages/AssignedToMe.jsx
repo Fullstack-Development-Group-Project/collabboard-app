@@ -1,36 +1,24 @@
+import { useState, useEffect } from "react";
 import Topbar from "../components/Topbar";
+import apiClient from "../API/client";
 
 function AssignedToMe() {
-  const tasks = [
-    {
-      name: "Finalize Q3 Marketing Budget",
-      board: "Marketing Strategy",
-      priority: "High",
-      status: "Doing",
-      dueDate: "Today",
-    },
-    {
-      name: "Review Design System Updates",
-      board: "Product Development",
-      priority: "Medium",
-      status: "To Do",
-      dueDate: "Oct 15, 2026",
-    },
-    {
-      name: "Client Onboarding: Acme Corp",
-      board: "Customer Success",
-      priority: "High",
-      status: "To Do",
-      dueDate: "Oct 16, 2026",
-    },
-    {
-      name: "Prepare Monthly Analytics Report",
-      board: "Data & Insights",
-      priority: "Low",
-      status: "Done",
-      dueDate: "Oct 10, 2026",
-    },
-  ];
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAssignedTasks = async () => {
+      try {
+        const response = await apiClient.get("/tasks/assigned");
+        setTasks(response.data || []);
+      } catch (error) {
+        console.error("Failed to fetch assigned tasks:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAssignedTasks();
+  }, []);
 
   return (
     <div className="page-wrapper">
@@ -69,59 +57,73 @@ function AssignedToMe() {
             </thead>
 
             <tbody>
-              {tasks.map((task) => (
-                <tr key={task.name}>
-                  <td>
-                    <div
-                      className={`task-name ${
-                        task.status === "Done" ? "completed-task" : ""
-                      }`}
-                    >
-                      <span className="task-status-dot"></span>
-                      {task.name}
-                    </div>
-                  </td>
-
-                  <td>
-                    <span className="board-chip">{task.board}</span>
-                  </td>
-
-                  <td>
-                    <span
-                      className={`assigned-priority ${task.priority.toLowerCase()}`}
-                    >
-                      {task.priority}
-                    </span>
-                  </td>
-
-                  <td>
-                    <span
-                      className={`assigned-status ${task.status
-                        .toLowerCase()
-                        .replace(" ", "-")}`}
-                    >
-                      {task.status}
-                    </span>
-                  </td>
-
-                  <td
-                    className={
-                      task.dueDate === "Today" ? "due-today" : ""
-                    }
-                  >
-                    {task.dueDate}
-                  </td>
-
-                  <td>
-                    <button
-                      className="table-action-btn"
-                      aria-label="Task options"
-                    >
-                      ⋯
-                    </button>
+              {loading ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
+                    Loading tasks...
                   </td>
                 </tr>
-              ))}
+              ) : tasks.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
+                    You have no assigned tasks.
+                  </td>
+                </tr>
+              ) : (
+                tasks.map((task) => (
+                  <tr key={task.id || task._id}>
+                    <td>
+                      <div
+                        className={`task-name ${
+                          task.status === "Done" ? "completed-task" : ""
+                        }`}
+                      >
+                        <span className="task-status-dot"></span>
+                        {task.title}
+                      </div>
+                    </td>
+
+                    <td>
+                      <span className="board-chip">{task.boardId ? "Board ID: " + task.boardId.substring(0,6) : "N/A"}</span>
+                    </td>
+
+                    <td>
+                      <span
+                        className={`assigned-priority ${task.priority.toLowerCase()}`}
+                      >
+                        {task.priority}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span
+                        className={`assigned-status ${task.status
+                          .toLowerCase()
+                          .replace(" ", "-")}`}
+                      >
+                        {task.status}
+                      </span>
+                    </td>
+
+                    <td
+                      className={
+                        !task.dueDate ? "" : new Date(task.dueDate).toDateString() === new Date().toDateString() ? "due-today" : ""
+                      }
+                    >
+                      {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No Due Date"}
+                    </td>
+
+                    <td>
+                      <button
+                        className="table-action-btn"
+                        aria-label="Task options"
+                      >
+                        ⋯
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

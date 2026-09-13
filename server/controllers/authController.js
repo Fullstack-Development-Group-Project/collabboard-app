@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const db = require('../data/memoryStore');
 const { JWT_SECRET } = require('../config/jwtConfig');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID: uuidv4 } = require('crypto');
 // Helper function to find user in memory store
 const findUserInMemory = (email) => {
   const trimmedEmail = email?.trim().toLowerCase();
