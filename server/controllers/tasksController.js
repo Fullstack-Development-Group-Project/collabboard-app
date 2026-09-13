@@ -47,7 +47,7 @@ exports.createTask = async (req, res, next) => {
         return res.status(404).json({ message: 'Board not found' });
       }
 
-      const column = await Column.findOne({ _id: columnId, boardId });
+      const column = await Column.findOne({ _id: { $eq: columnId }, boardId: { $eq: boardId } });
       if (!column) {
         return res.status(404).json({ message: 'Column not found' });
       }

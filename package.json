@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "cd server && npm start",
+    "heroku-postbuild": "npm install --prefix server && npm run build",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
