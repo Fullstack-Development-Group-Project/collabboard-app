@@ -3,7 +3,7 @@ const Activity = require('../models/Activity');
 const Board = require('../models/Board');
 const Column = require('../models/Column');
 const db = require('../data/memoryStore');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID: uuidv4 } = require('crypto');
 exports.getAssignedTasks = async (req, res, next) => {
   try {
     // Try database first
