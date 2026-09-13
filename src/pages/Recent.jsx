@@ -1,36 +1,26 @@
+import { useState, useEffect } from "react";
 import Topbar from "../components/Topbar";
+import apiClient from "../API/client";
 
 function Recent() {
-  const recentBoards = [
-    {
-      title: "Q3 Marketing Campaign",
-      description: "Coordination for the upcoming product launch...",
-      updated: "Updated 2h ago",
-      progress: "12/24",
-      icon: "📣",
-    },
-    {
-      title: "Frontend Rewrite",
-      description: "Tracking the migration of legacy components to the...",
-      updated: "Updated 5h ago",
-      progress: "45/50",
-      icon: "⌨",
-    },
-    {
-      title: "Critical Bug Triage",
-      description: "High priority issues reported from the latest mobile...",
-      updated: "Updated 1d ago",
-      progress: "3 Open",
-      icon: "🐞",
-    },
-    {
-      title: "Design System Update",
-      description: "Weekly sync notes and action items for the core...",
-      updated: "Updated 2d ago",
-      progress: "8 New",
-      icon: "👥",
-    },
-  ];
+  const [recentBoards, setRecentBoards] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecentBoards = async () => {
+      try {
+        const response = await apiClient.get("/boards");
+        // Sort by most recently updated if available, or just use the API order (which is usually recent first)
+        const boards = response.data || [];
+        setRecentBoards(boards.slice(0, 6)); // Show top 6 recent
+      } catch (error) {
+        console.error("Failed to fetch recent boards:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRecentBoards();
+  }, []);
 
   return (
     <div className="page-wrapper">
@@ -50,27 +40,31 @@ function Recent() {
         </div>
 
         <div className="recent-grid">
-          {recentBoards.map((board) => (
-            <article className="recent-card" key={board.title}>
-              <div className="recent-card-top">
-                <div className="recent-icon">{board.icon}</div>
-                <span>{board.updated}</span>
-              </div>
-
-              <h3>{board.title}</h3>
-              <p>{board.description}</p>
-
-              <div className="recent-card-footer">
-                <div className="recent-members">
-                  <span>N</span>
-                  <span>I</span>
-                  <span>+3</span>
+          {loading ? (
+            <p style={{ padding: "2rem" }}>Loading recent boards...</p>
+          ) : recentBoards.length === 0 ? (
+            <p style={{ padding: "2rem" }}>No recent boards found.</p>
+          ) : (
+            recentBoards.map((board) => (
+              <article className="recent-card" key={board.id || board._id}>
+                <div className="recent-card-top">
+                  <div className="recent-icon">📋</div>
+                  <span>{board.updatedAt ? new Date(board.updatedAt).toLocaleDateString() : "Just now"}</span>
                 </div>
 
-                <strong>{board.progress}</strong>
-              </div>
-            </article>
-          ))}
+                <h3>{board.title}</h3>
+                <p>Personal or Team Board</p>
+
+                <div className="recent-card-footer">
+                  <div className="recent-members">
+                    <span>Y</span>
+                  </div>
+
+                  <strong>{board.columnCount !== undefined ? `${board.columnCount} Cols` : "Active"}</strong>
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </main>
     </div>
