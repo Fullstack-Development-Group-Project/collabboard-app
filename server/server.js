@@ -1,3 +1,4 @@
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -71,11 +72,16 @@ if (process.env.NODE_ENV === 'production') {
 }
 app.use(errorHandler);
 
+const server = http.createServer(app);
+const { initSocket } = require('./socket');
+initSocket(server);
+
 const startServer = async () => {
   await connectDB();
 
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`[Socket.io] WebSocket server attached`);
   });
 };
 

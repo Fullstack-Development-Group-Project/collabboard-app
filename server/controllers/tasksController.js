@@ -4,6 +4,7 @@ const Board = require('../models/Board');
 const Column = require('../models/Column');
 const db = require('../data/memoryStore');
 const { randomUUID: uuidv4 } = require('crypto');
+const { getIO } = require('../socket');
 exports.getAssignedTasks = async (req, res, next) => {
   try {
     // Try database first
@@ -73,14 +74,18 @@ exports.createTask = async (req, res, next) => {
         metadata: { columnId, assignee },
       });
 
-      return res.status(201).json({
+      const taskData = {
         ...task.toObject(),
         id: task._id.toString(),
         boardId: task.boardId.toString(),
         columnId: task.columnId.toString(),
         assignee: task.assignee ? task.assignee.toString() : null,
         reporter: task.reporter.toString(),
-      });
+      };
+
+      try { getIO().to(`board:${boardId}`).emit('task:created', taskData); } catch (e) { /* socket not available */ }
+
+      return res.status(201).json(taskData);
     } catch (dbError) {
       console.log('Database operation failed, using memory store for task creation');
       // Fall back to memory store
@@ -119,6 +124,8 @@ exports.createTask = async (req, res, next) => {
         action: `created task '${newTask.title}'`,
         timestamp: new Date().toISOString(),
       });
+
+      try { getIO().to(`board:${boardId}`).emit('task:created', newTask); } catch (e) { /* socket not available */ }
 
       return res.status(201).json(newTask);
     }
@@ -163,14 +170,18 @@ exports.updateTask = async (req, res, next) => {
         metadata: { fields: Object.keys(updates) },
       });
 
-      return res.status(200).json({
+      const taskData = {
         ...updatedTask.toObject(),
         id: updatedTask._id.toString(),
         boardId: updatedTask.boardId.toString(),
         columnId: updatedTask.columnId.toString(),
         assignee: updatedTask.assignee ? updatedTask.assignee.toString() : null,
         reporter: updatedTask.reporter.toString(),
-      });
+      };
+
+      try { getIO().to(`board:${updatedTask.boardId}`).emit('task:updated', taskData); } catch (e) { /* socket not available */ }
+
+      return res.status(200).json(taskData);
     } else {
       // Memory Store Fallback
       const taskIndex = db.tasks.findIndex(t => t.id === id);
@@ -189,6 +200,8 @@ exports.updateTask = async (req, res, next) => {
         timestamp: new Date().toISOString(),
       });
 
+      try { getIO().to(`board:${task.boardId}`).emit('task:updated', db.tasks[taskIndex]); } catch (e) { /* socket not available */ }
+
       return res.status(200).json(db.tasks[taskIndex]);
     }
   } catch (error) {
@@ -203,15 +216,23 @@ exports.deleteTask = async (req, res, next) => {
     if (isDbConnected()) {
       const task = await Task.findById(id);
       if (!task) return res.status(404).json({ message: 'Task not found' });
+      const boardId = task.boardId;
       await Task.findByIdAndDelete(id);
+
+      try { getIO().to(`board:${boardId}`).emit('task:deleted', { id, boardId: boardId.toString() }); } catch (e) { /* socket not available */ }
+
       return res.status(204).send();
     } else {
       // Memory Store Fallback
       const taskIndex = db.tasks.findIndex(t => t.id === id);
       if (taskIndex === -1) return res.status(404).json({ message: 'Task not found in memory store' });
       
+      const boardId = db.tasks[taskIndex].boardId;
       db.tasks.splice(taskIndex, 1);
       persistMemoryStore();
+
+      try { getIO().to(`board:${boardId}`).emit('task:deleted', { id, boardId }); } catch (e) { /* socket not available */ }
+
       return res.status(204).send();
     }
   } catch (error) {

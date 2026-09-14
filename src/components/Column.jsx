@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-
 import apiClient from "../API/client";
 import TaskCard from "./TaskCard";
+import { EditIcon, TrashIcon, PlusIcon } from "./Icons";
 
-function Column({ column, boardId, onColumnRename, onColumnDelete, onTaskAdded,  columns, onTaskUpdated, onTaskDeleted }) {
+function Column({ column, boardId, onColumnRename, onColumnDelete, onTaskAdded, columns, onTaskUpdated, onTaskDeleted }) {
   const [isEditing, setIsEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(column.title || "");
 
@@ -35,31 +35,38 @@ function Column({ column, boardId, onColumnRename, onColumnDelete, onTaskAdded, 
       await apiClient.delete(`/boards/${boardId}/columns/${column.id}`);
       onColumnDelete?.(column.id);
     } catch (error) {
-     
-     console.error("Failed to delete column:", error);
+      console.error("Failed to delete column:", error);
     }
   };
 
-  const handleAddTask = async () => {
-  try {
-    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
 
-    const response = await apiClient.post(`/boards/${boardId}/tasks`, {
-      title: "New Task",
-      description: "Task description",
-      priority: "Medium",
-      columnId: column.id,
-      assignee: currentUser.name,
-    });
+  const handleAddTaskSubmit = async (e) => {
+    e.preventDefault();
+    const trimmed = newTaskTitle.trim();
+    if (!trimmed) return;
 
-    const createdTask = response.data;
+    try {
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
-    console.log("Task created:", createdTask);
-    onTaskAdded?.(createdTask);
-  } catch (error) {
-    console.error("Failed to create task:", error);
-  }
-};
+      const response = await apiClient.post(`/boards/${boardId}/tasks`, {
+        title: trimmed,
+        description: "Task description",
+        priority: "Medium",
+        columnId: column.id,
+        assignee: currentUser.name || "User",
+      });
+
+      const createdTask = response.data;
+      onTaskAdded?.(createdTask);
+      setNewTaskTitle("");
+      setIsAddingTask(false);
+    } catch (error) {
+      console.error("Failed to create task:", error);
+    }
+  };
+
   return (
     <section className="board-column">
       <div className="column-header">
@@ -85,44 +92,80 @@ function Column({ column, boardId, onColumnRename, onColumnDelete, onTaskAdded, 
           )}
         </div>
 
-        <div>
+        <div className="column-actions">
           {!isEditing && (
             <button
               type="button"
-              className="column-menu"
+              className="column-action-btn edit"
               aria-label="Rename column"
+              title="Rename column"
               onClick={() => setIsEditing(true)}
             >
-              ✎
+              <EditIcon size={14} />
             </button>
           )}
           <button
             type="button"
-            className="column-menu"
+            className="column-action-btn delete"
             aria-label="Delete column"
+            title="Delete column"
             onClick={handleDelete}
           >
-            🗑
+            <TrashIcon size={14} />
           </button>
         </div>
       </div>
 
       <div className="task-list">
         {(column.tasks || []).map((task) => (
-  <TaskCard
-    key={task.id}
-    task={task}
-    column={column}
-    columns={columns}
-    onTaskUpdated={onTaskUpdated}
-    onTaskDeleted={onTaskDeleted}
-  />
-))}
+          <TaskCard
+            key={task.id}
+            task={task}
+            column={column}
+            columns={columns}
+            onTaskUpdated={onTaskUpdated}
+            onTaskDeleted={onTaskDeleted}
+          />
+        ))}
       </div>
 
-      <button type="button" className="add-task-btn" onClick={handleAddTask}>
-        + Add Task
-      </button>
+      {isAddingTask ? (
+        <form onSubmit={handleAddTaskSubmit} className="add-task-form">
+          <input
+            type="text"
+            placeholder="Enter task title..."
+            value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
+            autoFocus
+            className="add-task-input"
+          />
+          <div className="add-task-actions">
+            <button type="submit" className="add-task-submit">
+              <PlusIcon size={14} />
+              Add Task
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingTask(false);
+                setNewTaskTitle("");
+              }}
+              className="add-task-cancel"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button
+          type="button"
+          className="add-task-btn"
+          onClick={() => setIsAddingTask(true)}
+        >
+          <PlusIcon size={15} />
+          <span>Add Task</span>
+        </button>
+      )}
     </section>
   );
 }

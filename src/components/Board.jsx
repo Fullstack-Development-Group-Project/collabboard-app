@@ -1,9 +1,9 @@
 import { useState } from "react";
-
 import apiClient from "../API/client";
 import Column from "./Column";
+import { PlusIcon, ChevronDownIcon } from "./Icons";
 
-function Board({ board, onColumnAdded, onColumnUpdated, onColumnDeleted, onTaskAdded, onTaskUpdated, onTaskDeleted }) {
+function Board({ board, boardsList = [], onSelectBoard, onColumnAdded, onColumnUpdated, onColumnDeleted, onTaskAdded, onTaskUpdated, onTaskDeleted }) {
   const [newColumnTitle, setNewColumnTitle] = useState("");
 
   const handleCreateColumn = async (event) => {
@@ -25,14 +25,33 @@ function Board({ board, onColumnAdded, onColumnUpdated, onColumnDeleted, onTaskA
   };
 
   const handleTaskUpdated = (updatedTask) => {
-  onTaskUpdated?.(updatedTask);
+    onTaskUpdated?.(updatedTask);
   };
 
   return (
     <div className="board-area">
       <div className="board-heading">
         <div>
-          <p className="board-label">My Boards</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <p className="board-label" style={{ margin: 0 }}>My Boards</p>
+            {boardsList.length > 1 && (
+              <div className="board-switcher-wrap">
+                <select
+                  value={board.id || board._id}
+                  onChange={(e) => onSelectBoard?.(e.target.value)}
+                  className="board-switcher-select"
+                  aria-label="Switch board"
+                >
+                  {boardsList.map((b) => (
+                    <option key={b.id || b._id} value={b.id || b._id}>
+                      {b.title}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon size={12} className="board-switcher-chevron" />
+              </div>
+            )}
+          </div>
           <h1>{board.title}</h1>
         </div>
 
@@ -62,10 +81,13 @@ function Board({ board, onColumnAdded, onColumnUpdated, onColumnDeleted, onTaskA
             type="text"
             value={newColumnTitle}
             onChange={(event) => setNewColumnTitle(event.target.value)}
-            placeholder="Add a new column"
+            placeholder="Add new column title..."
             aria-label="New column title"
           />
-          <button type="submit">+ Add Column</button>
+          <button type="submit">
+            <PlusIcon size={14} />
+            <span>Add Column</span>
+          </button>
         </form>
       </div>
     </div>

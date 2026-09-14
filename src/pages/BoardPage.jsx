@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 import Topbar from "../components/Topbar";
 import Board from "../components/Board";
 import apiClient from "../API/client";
+import { useSocket } from "../hooks/useSocket";
 
 const CACHE_KEY = "collabboard_board";
 
@@ -12,17 +13,30 @@ function BoardPage() {
   const [error, setError] = useState("");
   const [isOffline, setIsOffline] = useState(false);
 
-  const fetchBoard = async () => {
-    try {
-      const boardsRes = await apiClient.get("/boards");
-      const activeBoard = boardsRes.data[0];
+  const [allBoards, setAllBoards] = useState([]);
 
-      if (!activeBoard) {
-        setBoard(null);
-        return;
+  const fetchBoard = async (targetBoardId = null) => {
+    try {
+      setLoading(true);
+      const boardsRes = await apiClient.get("/boards");
+      const boardsList = Array.isArray(boardsRes.data) ? boardsRes.data : boardsRes.data.boards || [];
+      setAllBoards(boardsList);
+
+      const params = new URLSearchParams(window.location.search);
+      const boardIdFromUrl = targetBoardId || params.get("id");
+
+      let activeBoardId = boardIdFromUrl;
+
+      if (!activeBoardId) {
+        const activeBoard = boardsList[0];
+        if (!activeBoard) {
+          setBoard(null);
+          return;
+        }
+        activeBoardId = activeBoard.id || activeBoard._id;
       }
 
-      const boardRes = await apiClient.get(`/boards/${activeBoard.id}`);
+      const boardRes = await apiClient.get(`/boards/${activeBoardId}`);
       const fetchedBoard = boardRes.data;
 
       setBoard(fetchedBoard);
@@ -35,17 +49,56 @@ function BoardPage() {
       if (cachedBoard) {
         setBoard(JSON.parse(cachedBoard));    
         setIsOffline(true);
-      }else {
-      setError("Unable to load board data right now.");
+      } else {
+        setError("Unable to load board data right now.");
       }
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSelectBoard = (boardId) => {
+    const newUrl = `${window.location.pathname}?id=${boardId}`;
+    window.history.pushState({ path: newUrl }, "", newUrl);
+    fetchBoard(boardId);
+  };
+
+  const { joinBoard, leaveBoard, on, off } = useSocket();
+
   useEffect(() => {
     fetchBoard();
   }, []);
+
+  // Socket.io real-time listeners
+  useEffect(() => {
+    if (!board) return;
+
+    joinBoard(board.id);
+
+    const onTaskCreated = (task) => handleTaskAdded(task);
+    const onTaskUpdated = (task) => handleTaskUpdated(task);
+    const onTaskDeleted = ({ id }) => handleTaskDeleted(id);
+    const onColumnCreated = (col) => handleColumnAdded(col);
+    const onColumnUpdated = (col) => handleColumnUpdated(col);
+    const onColumnDeleted = ({ id }) => handleColumnDeleted(id);
+
+    on('task:created', onTaskCreated);
+    on('task:updated', onTaskUpdated);
+    on('task:deleted', onTaskDeleted);
+    on('column:created', onColumnCreated);
+    on('column:updated', onColumnUpdated);
+    on('column:deleted', onColumnDeleted);
+
+    return () => {
+      leaveBoard();
+      off('task:created', onTaskCreated);
+      off('task:updated', onTaskUpdated);
+      off('task:deleted', onTaskDeleted);
+      off('column:created', onColumnCreated);
+      off('column:updated', onColumnUpdated);
+      off('column:deleted', onColumnDeleted);
+    };
+  }, [board?.id]);
 
   const handleColumnAdded = (newColumn) => {
     setBoard((currentBoard) => {
@@ -179,6 +232,8 @@ function BoardPage() {
         {board ? (
           <Board
             board={board}
+            boardsList={allBoards}
+            onSelectBoard={handleSelectBoard}
             onColumnAdded={handleColumnAdded}
             onColumnUpdated={handleColumnUpdated}
             onColumnDeleted={handleColumnDeleted}

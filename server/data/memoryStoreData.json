@@ -1,0 +1,429 @@
+{
+  "users": [
+    {
+      "id": "user1",
+      "name": "Danindu",
+      "email": "danindu@example.com",
+      "password": "$2a$10$qhdpXfu50UDKZnChsELdReogHHPAZZ4gJLUAYX8vUbNEOjfUwnPNK",
+      "jobTitle": "Full Stack Developer",
+      "bio": "Building seamless collaborative experiences",
+      "avatar": "DA"
+    },
+    {
+      "id": "user2",
+      "name": "Uditha",
+      "email": "uditha@example.com",
+      "password": "$2a$10$p77M6rhH.EYoPZR3hFTBc.JkiWdZ/dPIukwQbQ50CcvXSSvq2QGFm",
+      "jobTitle": "Frontend Developer",
+      "bio": "UI/UX passionate developer",
+      "avatar": "UD"
+    },
+    {
+      "id": "user3",
+      "name": "Anupa",
+      "email": "anupa@example.com",
+      "password": "$2a$10$6bJD14VYj.3QCi.FGyxB2uBXycsk6byO7Lp89AS1tUT8nnBYY1vSO",
+      "jobTitle": "QA Engineer",
+      "bio": "Quality assurance specialist",
+      "avatar": "AN"
+    },
+    {
+      "id": "user4",
+      "name": "Induwara",
+      "email": "induwara@example.com",
+      "password": "$2a$10$kYakmcwgRnd9DNWW0ORPVepOnKY68Mh2YQRdsA87uhQeRzQod6rSS",
+      "jobTitle": "UI Designer",
+      "bio": "Creative UI/UX designer",
+      "avatar": "IN"
+    },
+    {
+      "id": "user5",
+      "name": "Udan",
+      "email": "udan@example.com",
+      "password": "$2a$10$bvNY0HD7imDHr/sONTzDG.5Zsl6i6hxPif0SY3tWSvn0lp9G/LSTm",
+      "jobTitle": "Backend Developer",
+      "bio": "API and database expert",
+      "avatar": "UD"
+    },
+    {
+      "id": "user6",
+      "name": "Nethupa",
+      "email": "nethupa@example.com",
+      "password": "$2a$10$ZOgsIrWyUBlVupv52TFqGekuD7O6s/7himADtU5NFcA7BsqJLt38G",
+      "jobTitle": "Full Stack Developer",
+      "bio": "Dashboard specialist",
+      "avatar": "NE"
+    },
+    {
+      "id": "user7",
+      "name": "Hansana",
+      "email": "hansana@example.com",
+      "password": "$2a$10$K0QfkQMndeoAzjuWpqkqTeKiUXshACwXI/o.DPsFLmlIQhvyioOt6",
+      "jobTitle": "Senior Backend Developer",
+      "bio": "Backend architecture expert",
+      "avatar": "HA"
+    },
+    {
+      "id": "user8",
+      "name": "Chanara",
+      "email": "chanara@example.com",
+      "password": "$2a$10$aJV.ZuTP2LDCzZTTVqoeWuc3hSwj6q2TlUt08zKj2bzcFrcgkFNvS",
+      "jobTitle": "Backend Developer",
+      "bio": "API testing and routing",
+      "avatar": "CH"
+    },
+    {
+      "id": "user9",
+      "name": "Oshada",
+      "email": "oshada@example.com",
+      "password": "$2a$10$XbAY6WBlzMZfm88fkia5beeYUaQhJO9ulbnc6..kE2tm/03yvXokG",
+      "jobTitle": "Frontend Developer",
+      "bio": "React component specialist",
+      "avatar": "OS"
+    },
+    {
+      "id": "user10",
+      "name": "Vihas",
+      "email": "vihas@example.com",
+      "password": "$2a$10$Dyv6rNpFa6ZUilQ39OvfnuXkNOvhvXrntecZQFn6Y32kUryd.Wfce",
+      "jobTitle": "UI Developer",
+      "bio": "UI consistency expert",
+      "avatar": "VI"
+    }
+  ],
+  "teams": [
+    {
+      "id": "teamA",
+      "name": "Frontend Squadron",
+      "description": "Core frontend development team",
+      "members": [
+        {
+          "userId": "user1",
+          "role": "admin"
+        },
+        {
+          "userId": "user2",
+          "role": "member"
+        },
+        {
+          "userId": "user9",
+          "role": "member"
+        }
+      ],
+      "createdAt": "2026-09-14T04:33:50.185Z"
+    },
+    {
+      "id": "teamB",
+      "name": "Backend Brigade",
+      "description": "Backend API and database team",
+      "members": [
+        {
+          "userId": "user7",
+          "role": "admin"
+        },
+        {
+          "userId": "user5",
+          "role": "member"
+        },
+        {
+          "userId": "user8",
+          "role": "member"
+        }
+      ],
+      "createdAt": "2026-09-14T04:33:50.186Z"
+    },
+    {
+      "id": "teamC",
+      "name": "Design & QA Team",
+      "description": "UI/UX design and quality assurance",
+      "members": [
+        {
+          "userId": "user4",
+          "role": "admin"
+        },
+        {
+          "userId": "user3",
+          "role": "member"
+        },
+        {
+          "userId": "user10",
+          "role": "member"
+        }
+      ],
+      "createdAt": "2026-09-14T04:33:50.186Z"
+    }
+  ],
+  "boards": [
+    {
+      "id": "board1",
+      "title": "SyncBoard - Frontend Development",
+      "description": "All frontend tasks for SyncBoard project",
+      "teamId": "teamA",
+      "createdBy": "user1",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "updatedAt": "2026-09-14T04:33:50.186Z"
+    },
+    {
+      "id": "board2",
+      "title": "SyncBoard - Backend APIs",
+      "description": "REST API development and testing",
+      "teamId": "teamB",
+      "createdBy": "user7",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "updatedAt": "2026-09-14T04:33:50.186Z"
+    },
+    {
+      "id": "board3",
+      "title": "UI/UX Design Sprint",
+      "description": "Design and branding tasks",
+      "teamId": "teamC",
+      "createdBy": "user4",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "updatedAt": "2026-09-14T04:33:50.186Z"
+    }
+  ],
+  "columns": [
+    {
+      "id": "col1",
+      "boardId": "board1",
+      "title": "To Do",
+      "position": 0
+    },
+    {
+      "id": "col2",
+      "boardId": "board1",
+      "title": "In Progress",
+      "position": 1
+    },
+    {
+      "id": "col3",
+      "boardId": "board1",
+      "title": "Review",
+      "position": 2
+    },
+    {
+      "id": "col4",
+      "boardId": "board1",
+      "title": "Done",
+      "position": 3
+    },
+    {
+      "id": "col5",
+      "boardId": "board2",
+      "title": "To Do",
+      "position": 0
+    },
+    {
+      "id": "col6",
+      "boardId": "board2",
+      "title": "In Progress",
+      "position": 1
+    },
+    {
+      "id": "col7",
+      "boardId": "board2",
+      "title": "Review",
+      "position": 2
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task1",
+      "boardId": "board1",
+      "columnId": "col2",
+      "title": "Setup React routing",
+      "description": "Configure React Router for all pages",
+      "assignee": "user1",
+      "priority": "High",
+      "dueDate": "2026-09-05T00:00:00Z",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "comments": [],
+      "status": "In Progress"
+    },
+    {
+      "id": "task2",
+      "boardId": "board1",
+      "columnId": "col2",
+      "title": "Design login page UI",
+      "description": "Create responsive login page with validation",
+      "assignee": "user2",
+      "priority": "High",
+      "dueDate": "2026-09-03T00:00:00Z",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "comments": []
+    },
+    {
+      "id": "task3",
+      "boardId": "board1",
+      "columnId": "col2",
+      "title": "Implement board component",
+      "description": "Create Kanban board with drag-drop functionality",
+      "assignee": "user9",
+      "priority": "High",
+      "dueDate": "2026-09-07T00:00:00Z",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "comments": []
+    },
+    {
+      "id": "task4",
+      "boardId": "board1",
+      "columnId": "col3",
+      "title": "Integrate Axios API client",
+      "description": "Setup API communication layer with interceptors",
+      "assignee": "user1",
+      "priority": "Medium",
+      "dueDate": "2026-09-02T00:00:00Z",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "comments": []
+    },
+    {
+      "id": "task5",
+      "boardId": "board1",
+      "columnId": "col4",
+      "title": "Create responsive layout",
+      "description": "Build mobile-friendly dashboard layout",
+      "assignee": "user2",
+      "priority": "Medium",
+      "dueDate": "2026-08-28T00:00:00Z",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "comments": []
+    },
+    {
+      "id": "task6",
+      "boardId": "board2",
+      "columnId": "col5",
+      "title": "Implement auth routes",
+      "description": "Create login and registration endpoints",
+      "assignee": "user7",
+      "priority": "High",
+      "dueDate": "2026-09-01T00:00:00Z",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "comments": []
+    },
+    {
+      "id": "task7",
+      "boardId": "board2",
+      "columnId": "col6",
+      "title": "Setup MongoDB connection",
+      "description": "Configure Mongoose and database schema",
+      "assignee": "user5",
+      "priority": "High",
+      "dueDate": "2026-09-04T00:00:00Z",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "comments": []
+    },
+    {
+      "id": "task8",
+      "boardId": "board2",
+      "columnId": "col7",
+      "title": "Create board endpoints",
+      "description": "Implement CRUD operations for boards",
+      "assignee": "user8",
+      "priority": "Medium",
+      "dueDate": "2026-09-06T00:00:00Z",
+      "createdAt": "2026-09-14T04:33:50.186Z",
+      "comments": []
+    }
+  ],
+  "activities": [
+    {
+      "id": "act1",
+      "userId": "user1",
+      "userName": "Danindu",
+      "boardId": "board1",
+      "action": "created task 'Setup React routing'",
+      "timestamp": "2026-09-14T03:33:50.186Z"
+    },
+    {
+      "id": "act2",
+      "userId": "user2",
+      "userName": "Uditha",
+      "boardId": "board1",
+      "action": "moved task 'Design login page UI' to In Progress",
+      "timestamp": "2026-09-14T04:03:50.186Z"
+    },
+    {
+      "id": "act3",
+      "userId": "user9",
+      "userName": "Oshada",
+      "boardId": "board1",
+      "action": "assigned 'Implement board component' to themselves",
+      "timestamp": "2026-09-14T04:18:50.186Z"
+    },
+    {
+      "id": "act4",
+      "userId": "user7",
+      "userName": "Hansana",
+      "boardId": "board2",
+      "action": "created task 'Implement auth routes'",
+      "timestamp": "2026-09-14T02:33:50.186Z"
+    },
+    {
+      "id": "act5",
+      "userId": "user5",
+      "userName": "Udan",
+      "boardId": "board2",
+      "action": "completed task 'Setup MongoDB connection'",
+      "timestamp": "2026-09-14T04:23:50.186Z"
+    },
+    {
+      "id": "act6",
+      "userId": "user1",
+      "userName": "Danindu",
+      "boardId": "board1",
+      "action": "commented on 'Integrate Axios API client': Looking good!",
+      "timestamp": "2026-09-14T04:28:50.186Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif1",
+      "userId": "user1",
+      "type": "assignment",
+      "message": "You were assigned to 'Setup React routing'",
+      "boardId": "board1",
+      "taskId": "task1",
+      "read": false,
+      "createdAt": "2026-09-14T03:33:50.186Z"
+    },
+    {
+      "id": "notif2",
+      "userId": "user2",
+      "type": "comment",
+      "message": "Danindu commented on 'Design login page UI'",
+      "boardId": "board1",
+      "taskId": "task2",
+      "read": false,
+      "createdAt": "2026-09-14T04:03:50.186Z"
+    },
+    {
+      "id": "notif3",
+      "userId": "user9",
+      "type": "mention",
+      "message": "Danindu mentioned you in 'Implement board component'",
+      "boardId": "board1",
+      "taskId": "task3",
+      "read": true,
+      "createdAt": "2026-09-14T04:18:50.186Z"
+    },
+    {
+      "id": "notif4",
+      "userId": "user7",
+      "type": "task_due",
+      "message": "Task 'Implement auth routes' is due soon",
+      "boardId": "board2",
+      "taskId": "task6",
+      "read": false,
+      "createdAt": "2026-09-14T04:23:50.186Z"
+    },
+    {
+      "id": "notif5",
+      "userId": "user1",
+      "type": "team_update",
+      "message": "Uditha joined Frontend Squadron",
+      "boardId": "board1",
+      "read": true,
+      "createdAt": "2026-09-14T04:28:50.186Z"
+    }
+  ]
+}
