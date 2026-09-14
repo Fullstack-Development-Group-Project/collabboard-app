@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 import Topbar from "../components/Topbar";
 import Board from "../components/Board";
 import apiClient from "../API/client";
+import { useSocket } from "../hooks/useSocket";
 
 const CACHE_KEY = "collabboard_board";
 
@@ -43,9 +44,42 @@ function BoardPage() {
     }
   };
 
+  const { joinBoard, leaveBoard, on, off } = useSocket();
+
   useEffect(() => {
     fetchBoard();
   }, []);
+
+  // Socket.io real-time listeners
+  useEffect(() => {
+    if (!board) return;
+
+    joinBoard(board.id);
+
+    const onTaskCreated = (task) => handleTaskAdded(task);
+    const onTaskUpdated = (task) => handleTaskUpdated(task);
+    const onTaskDeleted = ({ id }) => handleTaskDeleted(id);
+    const onColumnCreated = (col) => handleColumnAdded(col);
+    const onColumnUpdated = (col) => handleColumnUpdated(col);
+    const onColumnDeleted = ({ id }) => handleColumnDeleted(id);
+
+    on('task:created', onTaskCreated);
+    on('task:updated', onTaskUpdated);
+    on('task:deleted', onTaskDeleted);
+    on('column:created', onColumnCreated);
+    on('column:updated', onColumnUpdated);
+    on('column:deleted', onColumnDeleted);
+
+    return () => {
+      leaveBoard();
+      off('task:created', onTaskCreated);
+      off('task:updated', onTaskUpdated);
+      off('task:deleted', onTaskDeleted);
+      off('column:created', onColumnCreated);
+      off('column:updated', onColumnUpdated);
+      off('column:deleted', onColumnDeleted);
+    };
+  }, [board?.id]);
 
   const handleColumnAdded = (newColumn) => {
     setBoard((currentBoard) => {

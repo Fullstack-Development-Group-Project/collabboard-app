@@ -2,6 +2,7 @@ const Board = require('../models/Board');
 const Column = require('../models/Column');
 const Task = require('../models/Task');
 const db = require('../data/memoryStore');
+const { getIO } = require('../socket');
 
 const getBoardColumns = async (boardId) => {
   try {
@@ -84,13 +85,17 @@ exports.createBoardColumn = async (req, res, next) => {
         board.columns.push(newColumn._id);
         await board.save();
 
-        return res.status(201).json({
+        const columnData = {
           id: newColumn._id.toString(),
           boardId: newColumn.boardId.toString(),
           title: newColumn.title,
           position: newColumn.position,
           tasks: [],
-        });
+        };
+
+        try { getIO().to(`board:${boardId}`).emit('column:created', columnData); } catch (e) { /* socket not available */ }
+
+        return res.status(201).json(columnData);
       }
     } catch (dbError) {
       console.log('Database operation failed, using memory store');
@@ -144,13 +149,17 @@ exports.updateBoardColumn = async (req, res, next) => {
       await column.save();
 
       const tasks = await Task.find({ boardId, columnId: column._id }).lean();
-      return res.status(200).json({
+      const columnData = {
         id: column._id.toString(),
         boardId: column.boardId.toString(),
         title: column.title,
         position: column.position,
         tasks,
-      });
+      };
+
+      try { getIO().to(`board:${boardId}`).emit('column:updated', columnData); } catch (e) { /* socket not available */ }
+
+      return res.status(200).json(columnData);
     } else {
       // Memory Store Fallback
       const board = db.boards.find(b => b.id === boardId);
@@ -188,6 +197,8 @@ exports.deleteBoardColumn = async (req, res, next) => {
       await board.save();
       await Task.deleteMany({ boardId, columnId: column._id });
       await Column.findByIdAndDelete(column._id);
+
+      try { getIO().to(`board:${boardId}`).emit('column:deleted', { id: columnId, boardId }); } catch (e) { /* socket not available */ }
 
       return res.status(204).send();
     } else {
