@@ -10,6 +10,8 @@ router.use(authMiddleware); // Protect all board routes
 router.get('/', boardsController.getAllBoards);
 router.post('/', boardsController.createBoard);
 router.get('/:id', boardsController.getBoardById);
+router.put('/:id', boardsController.updateBoard);
+router.delete('/:id', boardsController.deleteBoard);
 
 router.get('/:boardId/columns', columnsController.getBoardColumnsList);
 router.post('/:boardId/columns', columnsController.createBoardColumn);

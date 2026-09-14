@@ -125,6 +125,8 @@ exports.createTask = async (req, res, next) => {
         timestamp: new Date().toISOString(),
       });
 
+      try { getIO().to(`board:${boardId}`).emit('task:created', newTask); } catch (e) { /* socket not available */ }
+
       return res.status(201).json(newTask);
     }
   } catch (error) {
@@ -198,6 +200,8 @@ exports.updateTask = async (req, res, next) => {
         timestamp: new Date().toISOString(),
       });
 
+      try { getIO().to(`board:${task.boardId}`).emit('task:updated', db.tasks[taskIndex]); } catch (e) { /* socket not available */ }
+
       return res.status(200).json(db.tasks[taskIndex]);
     }
   } catch (error) {
@@ -223,8 +227,12 @@ exports.deleteTask = async (req, res, next) => {
       const taskIndex = db.tasks.findIndex(t => t.id === id);
       if (taskIndex === -1) return res.status(404).json({ message: 'Task not found in memory store' });
       
+      const boardId = db.tasks[taskIndex].boardId;
       db.tasks.splice(taskIndex, 1);
       persistMemoryStore();
+
+      try { getIO().to(`board:${boardId}`).emit('task:deleted', { id, boardId }); } catch (e) { /* socket not available */ }
+
       return res.status(204).send();
     }
   } catch (error) {

@@ -127,27 +127,116 @@ exports.createBoard = async (req, res, next) => {
       }
     }
 
-    const board = await Board.create({
-      title: trimmedTitle,
-      teamId: teamId || null,
-      createdBy: req.user.id,
-      isPersonal: !teamId,
-    });
+    try {
+      const board = await Board.create({
+        title: trimmedTitle,
+        teamId: teamId || null,
+        createdBy: req.user.id,
+        isPersonal: !teamId,
+      });
 
-    const defaultColumns = ['To Do', 'Doing', 'Done'].map((columnTitle, index) => ({
-      boardId: board._id,
-      title: columnTitle,
-      position: index,
-    }));
+      const defaultColumns = ['To Do', 'Doing', 'Done'].map((columnTitle, index) => ({
+        boardId: board._id,
+        title: columnTitle,
+        position: index,
+      }));
 
-    const createdColumns = await Column.insertMany(defaultColumns);
-    await Board.findByIdAndUpdate(board._id, {
-      $set: { columns: createdColumns.map((column) => column._id) },
-    });
+      const createdColumns = await Column.insertMany(defaultColumns);
+      await Board.findByIdAndUpdate(board._id, {
+        $set: { columns: createdColumns.map((column) => column._id) },
+      });
 
-    const boardResponse = await buildBoardResponse(board._id);
-    res.status(201).json(boardResponse);
+      const boardResponse = await buildBoardResponse(board._id);
+      return res.status(201).json(boardResponse);
+    } catch (dbError) {
+      console.log('Database error in createBoard, falling back to memory store:', dbError.message);
+      const newBoardId = 'board_' + Date.now();
+      const newBoard = {
+        id: newBoardId,
+        title: trimmedTitle,
+        description: req.body.description || 'Custom board created in workspace',
+        teamId: teamId || null,
+        createdBy: req.user.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      db.boards.push(newBoard);
+
+      const defaultCols = ['To Do', 'Doing', 'Done'].map((colTitle, idx) => {
+        const col = {
+          id: 'col_' + Date.now() + '_' + idx,
+          boardId: newBoardId,
+          title: colTitle,
+          position: idx
+        };
+        db.columns.push(col);
+        return { ...col, tasks: [] };
+      });
+
+      return res.status(201).json({
+        ...newBoard,
+        columns: defaultCols
+      });
+    }
   } catch (error) {
     next(error);
   }
 };
+
+exports.updateBoard = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { title, description } = req.body;
+
+    try {
+      const board = await Board.findById(id);
+      if (!board) {
+        return res.status(404).json({ message: 'Board not found' });
+      }
+
+      if (title !== undefined) board.title = title.trim();
+      if (description !== undefined) board.description = description;
+      await board.save();
+
+      const boardResponse = await buildBoardResponse(board._id);
+      return res.status(200).json(boardResponse);
+    } catch (dbError) {
+      console.log('Database error in updateBoard, using memory store');
+      const board = db.boards.find(b => b.id === id);
+      if (!board) {
+        return res.status(404).json({ message: 'Board not found' });
+      }
+      if (title !== undefined) board.title = title.trim();
+      if (description !== undefined) board.description = description;
+      board.updatedAt = new Date().toISOString();
+      return res.status(200).json(getBoardFromMemory(id) || board);
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteBoard = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    try {
+      await Board.findByIdAndDelete(id);
+      await Column.deleteMany({ boardId: id });
+      await Task.deleteMany({ boardId: id });
+      return res.status(204).send();
+    } catch (dbError) {
+      console.log('Database error in deleteBoard, using memory store');
+      const idx = db.boards.findIndex(b => b.id === id);
+      if (idx !== -1) {
+        db.boards.splice(idx, 1);
+        db.columns = db.columns.filter(c => c.boardId !== id);
+        db.tasks = db.tasks.filter(t => t.boardId !== id);
+      }
+      return res.status(204).send();
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+

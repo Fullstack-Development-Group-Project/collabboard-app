@@ -13,17 +13,30 @@ function BoardPage() {
   const [error, setError] = useState("");
   const [isOffline, setIsOffline] = useState(false);
 
-  const fetchBoard = async () => {
-    try {
-      const boardsRes = await apiClient.get("/boards");
-      const activeBoard = boardsRes.data[0];
+  const [allBoards, setAllBoards] = useState([]);
 
-      if (!activeBoard) {
-        setBoard(null);
-        return;
+  const fetchBoard = async (targetBoardId = null) => {
+    try {
+      setLoading(true);
+      const boardsRes = await apiClient.get("/boards");
+      const boardsList = Array.isArray(boardsRes.data) ? boardsRes.data : boardsRes.data.boards || [];
+      setAllBoards(boardsList);
+
+      const params = new URLSearchParams(window.location.search);
+      const boardIdFromUrl = targetBoardId || params.get("id");
+
+      let activeBoardId = boardIdFromUrl;
+
+      if (!activeBoardId) {
+        const activeBoard = boardsList[0];
+        if (!activeBoard) {
+          setBoard(null);
+          return;
+        }
+        activeBoardId = activeBoard.id || activeBoard._id;
       }
 
-      const boardRes = await apiClient.get(`/boards/${activeBoard.id}`);
+      const boardRes = await apiClient.get(`/boards/${activeBoardId}`);
       const fetchedBoard = boardRes.data;
 
       setBoard(fetchedBoard);
@@ -36,12 +49,18 @@ function BoardPage() {
       if (cachedBoard) {
         setBoard(JSON.parse(cachedBoard));    
         setIsOffline(true);
-      }else {
-      setError("Unable to load board data right now.");
+      } else {
+        setError("Unable to load board data right now.");
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSelectBoard = (boardId) => {
+    const newUrl = `${window.location.pathname}?id=${boardId}`;
+    window.history.pushState({ path: newUrl }, "", newUrl);
+    fetchBoard(boardId);
   };
 
   const { joinBoard, leaveBoard, on, off } = useSocket();
@@ -213,6 +232,8 @@ function BoardPage() {
         {board ? (
           <Board
             board={board}
+            boardsList={allBoards}
+            onSelectBoard={handleSelectBoard}
             onColumnAdded={handleColumnAdded}
             onColumnUpdated={handleColumnUpdated}
             onColumnDeleted={handleColumnDeleted}

@@ -1,22 +1,32 @@
 import { useAuth } from "../hooks/useAuth";
 import { NavLink, useNavigate } from "react-router";
 import logo from "../assets/collabboard-logo.jpeg";
+import {
+  DashboardIcon,
+  BoardsIcon,
+  RecentIcon,
+  AssignedIcon,
+  TeamIcon,
+  ActivityIcon,
+  SettingsIcon,
+  LogoutIcon,
+} from "./Icons";
 
 function Sidebar() {
   const navigate = useNavigate();
-
   const user = useAuth();
 
   const userName = user?.name || "User";
   const userInitials = userName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) || "U";
+  
   const navItems = [
-    { path: "/", icon: "▦", label: "Dashboard" },
-    { path: "/boards", icon: "◉", label: "My Boards" },
-    { path: "/recent", icon: "↶", label: "Recent" },
-    { path: "/assigned", icon: "✓", label: "Assigned to Me" },
-    { path: "/team", icon: "♟", label: "Team" },
-    { path: "/activity", icon: "▣", label: "Activity" },
-    { path: "/settings", icon: "⚙", label: "Settings" },
+    { path: "/", icon: DashboardIcon, label: "Dashboard" },
+    { path: "/boards", icon: BoardsIcon, label: "My Boards" },
+    { path: "/recent", icon: RecentIcon, label: "Recent" },
+    { path: "/assigned", icon: AssignedIcon, label: "Assigned to Me" },
+    { path: "/team", icon: TeamIcon, label: "Team" },
+    { path: "/activity", icon: ActivityIcon, label: "Activity" },
+    { path: "/settings", icon: SettingsIcon, label: "Settings" },
   ];
 
   return (
@@ -35,49 +45,55 @@ function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === "/"}
-            className={({ isActive }) =>
-              `nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            <span className="nav-icon">{item.icon}</span>
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === "/"}
+              className={({ isActive }) =>
+                `nav-item ${isActive ? "active" : ""}`
+              }
+            >
+              <span className="nav-icon">
+                <Icon size={18} />
+              </span>
+              <span>{item.label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
 
-      <div className="profile-link">
-        <div className="profile-avatar">{userInitials}</div>
+      <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "10px", paddingTop: "20px" }}>
+        <div
+          className="profile-link"
+          onClick={() => navigate("/settings")}
+          style={{ cursor: "pointer" }}
+          title="View Settings & Profile"
+        >
+          <div className="profile-avatar">{userInitials}</div>
 
-        <div className="profile-info">
-          <strong>Profile</strong>
-          <span>{userName}</span>
+          <div className="profile-info">
+            <strong>Profile</strong>
+            <span>{userName}</span>
+          </div>
         </div>
-      </div>
 
-      <button
-        onClick={() => {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          navigate("/login");
-        }}
-        style={{
-          marginTop: "16px",
-          padding: "10px",
-          background: "transparent",
-          color: "#dc2626",
-          border: "1px solid #dc2626",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontWeight: "600"
-        }}
-      >
-        Logout
-      </button>
+        <button
+          className="sidebar-logout-btn"
+          onClick={() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            navigate("/login");
+          }}
+          type="button"
+          aria-label="Sign out"
+        >
+          <LogoutIcon size={17} />
+          <span>Sign Out</span>
+        </button>
+      </div>
     </aside>
   );
 }
